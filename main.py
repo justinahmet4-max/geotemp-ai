@@ -1,5 +1,5 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import numpy as np
@@ -39,21 +39,24 @@ async def fetch_open_meteo(lat: float, lng: float) -> dict:
     cache_key = f"meteo_{round(lat,2)}_{round(lng,2)}"
     if cache_key in _cache:
         return _cache[cache_key]
-    try:
-        async with httpx.AsyncClient(timeout=12.0) as client:
-            url = (
-                f"https://api.open-meteo.com/v1/forecast?"
-                f"latitude={lat}&longitude={lng}"
-                f"&daily=temperature_2m_max,temperature_2m_min,precipitation_sum"
-                f"&timezone=auto&forecast_days=365"
-            )
-            resp = await client.get(url)
-            if resp.status_code == 200:
-                data = resp.json()
-                _cache[cache_key] = data
-                return data
-    except Exception:
-        pass
+    for attempt in range(2):
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                url = (
+                    f"https://api.open-meteo.com/v1/forecast?"
+                    f"latitude={lat}&longitude={lng}"
+                    f"&daily=temperature_2m_max,temperature_2m_min,precipitation_sum"
+                    f"&timezone=auto&forecast_days=365"
+                )
+                resp = await client.get(url)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    _cache[cache_key] = data
+                    return data
+        except Exception:
+            if attempt == 0:
+                await asyncio.sleep(1)
+            continue
     return None
 
 
@@ -61,17 +64,20 @@ async def fetch_elevation(lat: float, lng: float) -> float:
     cache_key = f"elev_{round(lat,3)}_{round(lng,3)}"
     if cache_key in _cache:
         return _cache[cache_key]
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            url = f"https://api.open-elevation.com/api/v1/lookup-elevation?locations={lat},{lng}"
-            resp = await client.get(url)
-            if resp.status_code == 200:
-                data = resp.json()
-                elev = data["results"][0]["elevation"]
-                _cache[cache_key] = elev
-                return elev
-    except Exception:
-        pass
+    for attempt in range(2):
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                url = f"https://api.open-elevation.com/api/v1/lookup-elevation?locations={lat},{lng}"
+                resp = await client.get(url)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    elev = data["results"][0]["elevation"]
+                    _cache[cache_key] = elev
+                    return elev
+        except Exception:
+            if attempt == 0:
+                await asyncio.sleep(1)
+            continue
     return None
 
 
@@ -79,23 +85,26 @@ async def fetch_elevation_grid(bounds: BoundingBox, grid_size: int = 10) -> list
     cache_key = f"egrid_{round(bounds.north,3)}_{round(bounds.south,3)}_{round(bounds.east,3)}_{round(bounds.west,3)}_{grid_size}"
     if cache_key in _cache:
         return _cache[cache_key]
-    try:
-        locations = []
-        for i in range(grid_size):
-            for j in range(grid_size):
-                lat = bounds.south + (bounds.north - bounds.south) * i / (grid_size - 1)
-                lng = bounds.west + (bounds.east - bounds.west) * j / (grid_size - 1)
-                locations.append(f"{lat},{lng}")
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            url = "https://api.open-elevation.com/api/v1/lookup-elevation?locations=" + "|".join(locations)
-            resp = await client.get(url)
-            if resp.status_code == 200:
-                data = resp.json()
-                elevations = [r["elevation"] for r in data["results"]]
-                _cache[cache_key] = elevations
-                return elevations
-    except Exception:
-        pass
+    for attempt in range(2):
+        try:
+            locations = []
+            for i in range(grid_size):
+                for j in range(grid_size):
+                    lat = bounds.south + (bounds.north - bounds.south) * i / (grid_size - 1)
+                    lng = bounds.west + (bounds.east - bounds.west) * j / (grid_size - 1)
+                    locations.append(f"{lat},{lng}")
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                url = "https://api.open-elevation.com/api/v1/lookup-elevation?locations=" + "|".join(locations)
+                resp = await client.get(url)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    elevations = [r["elevation"] for r in data["results"]]
+                    _cache[cache_key] = elevations
+                    return elevations
+        except Exception:
+            if attempt == 0:
+                await asyncio.sleep(1)
+            continue
     return None
 
 
@@ -103,17 +112,20 @@ async def fetch_afad_deprem() -> list:
     cache_key = "afad_deprem"
     if cache_key in _cache:
         return _cache[cache_key]
-    try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            url = "https://deprem.afad.gov.tr/apiv2/event/filter?start=2024-01-01&end=2024-12-31&minmag=2&maxmag=8&limit=500"
-            resp = await client.get(url)
-            if resp.status_code == 200:
-                data = resp.json()
-                events = data.get("data", [])
-                _cache[cache_key] = events
-                return events
-    except Exception:
-        pass
+    for attempt in range(2):
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                url = "https://deprem.afad.gov.tr/apiv2/event/filter?start=2024-01-01&end=2024-12-31&minmag=2&maxmag=8&limit=500"
+                resp = await client.get(url)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    events = data.get("data", [])
+                    _cache[cache_key] = events
+                    return events
+        except Exception:
+            if attempt == 0:
+                await asyncio.sleep(1)
+            continue
     return []
 
 
@@ -540,6 +552,39 @@ async def websocket_gpr(websocket: WebSocket):
             await websocket.send_json({"type": "complete", "message": "Tarama tamamlandi"})
     except WebSocketDisconnect:
         pass
+
+
+@app.get("/api/gpr-stream")
+async def gpr_stream_sse(lat: float = 39.9, lng: float = 32.8):
+    async def event_generator():
+        seed_val = int((lat + lng) * 10000) % (2**31)
+        random.seed(seed_val)
+
+        depth_points = 100
+        for t in range(depth_points):
+            amp = 0
+            for layer in range(5):
+                layer_depth = random.uniform(10, 80) * (layer + 1)
+                amp += random.uniform(0.3, 0.9) * math.exp(-t * 0.5 / 200) * math.sin(2 * math.pi * t * 0.5 / (layer_depth + 10))
+            amp += random.gauss(0, 0.05)
+            amp = max(-1, min(1, amp))
+            msg = json.dumps({
+                "type": "signal",
+                "time": t,
+                "depth": round(t * 0.5, 1),
+                "amplitude": round(amp, 4),
+                "progress": round((t + 1) / depth_points * 100, 1)
+            })
+            yield f"data: {msg}\n\n"
+            await asyncio.sleep(0.03)
+
+        yield f"data: {json.dumps({'type': 'complete', 'message': 'Tarama tamamlandi'})}\n\n"
+
+    return StreamingResponse(event_generator(), media_type="text/event-stream", headers={
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no"
+    })
 
 
 @app.get("/")

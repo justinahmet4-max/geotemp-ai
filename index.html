@@ -29,7 +29,7 @@
         .info-bar .dot{width:6px;height:6px;background:#00d4ff;border-radius:50%;animation:pulse 2s infinite}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 
-        .sidebar-scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding-bottom:8px}
+        .sidebar-scroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding-bottom:8px}
         .sidebar-scroll::-webkit-scrollbar{width:4px}
         .sidebar-scroll::-webkit-scrollbar-track{background:transparent}
         .sidebar-scroll::-webkit-scrollbar-thumb{background:#2a2d3a;border-radius:2px}
@@ -261,7 +261,7 @@ var map,currentMode='click',cornerPoints=[],cornerMarkers=[],rectDraw=null,rectS
 var activeOverlays={},currentBaseLayer='dark',baseLayers={};
 var lastAreaBounds=null,currentDepth=0;
 var depthRanges=['Yuzey','0-50m','50-200m','200-500m','500-1000m'];
-var gprWs=null,gprData=[],gprAnimFrame=null;
+var gprEventSource=null,gprData=[],gprAnimFrame=null;
 var threeScene=null,threeCamera=null,threeRenderer=null;
 
 function initMap(){
@@ -643,22 +643,19 @@ function changeDepth(val){
 }
 
 function startGPR(lat,lng){
-    if(gprWs&&gprWs.readyState===WebSocket.OPEN)gprWs.close();
+    if(gprEventSource){gprEventSource.close();}
     gprData=[];
     document.getElementById('gpr-katmanlar').innerHTML='';
     document.getElementById('gpr-panel').classList.add('show');
     document.getElementById('gpr-dot').className='dot';
-    document.getElementById('gpr-status-text').textContent='WebSocket baglantisi kuruluyor...';
+    document.getElementById('gpr-status-text').textContent='SSE baglantisi kuruluyor...';
 
-    var wsProtocol=window.location.protocol==='https:'?'wss:':'ws:';
-    var wsUrl=wsProtocol+'//'+window.location.host+'/ws/gpr';
-    gprWs=new WebSocket(wsUrl);
-    gprWs.onopen=function(){
+    gprEventSource=new EventSource('/api/gpr-stream?lat='+lat+'&lng='+lng);
+    gprEventSource.onopen=function(){
         document.getElementById('gpr-dot').className='dot connected';
         document.getElementById('gpr-status-text').textContent='Tarama baslatildi...';
-        gprWs.send(JSON.stringify({lat:lat,lng:lng}));
     };
-    gprWs.onmessage=function(evt){
+    gprEventSource.onmessage=function(evt){
         var msg=JSON.parse(evt.data);
         if(msg.type==='signal'){
             gprData.push({t:msg.time,d:msg.depth,a:msg.amplitude});
@@ -668,11 +665,15 @@ function startGPR(lat,lng){
             drawGPR();
         }else if(msg.type==='complete'){
             document.getElementById('gpr-status-text').textContent='Tarama tamamlandi';
+            gprEventSource.close();
+            gprEventSource=null;
             showGPRKatmanlar(lat,lng);
         }
     };
-    gprWs.onerror=function(){document.getElementById('gpr-status-text').textContent='Hata: WebSocket baglantisi kesildi';};
-    gprWs.onclose=function(){document.getElementById('gpr-dot').className='dot';};
+    gprEventSource.onerror=function(){
+        document.getElementById('gpr-status-text').textContent='Hata: SSE baglantisi kesildi';
+        document.getElementById('gpr-dot').className='dot';
+    };
 }
 
 function drawGPR(){
@@ -734,7 +735,7 @@ function showGPRKatmanlar(lat,lng){
 }
 
 function closeGPR(){
-    if(gprWs)gprWs.close();
+    if(gprEventSource){gprEventSource.close();gprEventSource=null;}
     document.getElementById('gpr-panel').classList.remove('show');
     gprData=[];
 }
