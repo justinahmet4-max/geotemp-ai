@@ -58,7 +58,7 @@ def generate_mock_temperature(bounds: BoundingBox) -> dict:
 
 def generate_thermal_grid(bounds: BoundingBox) -> dict:
     import random
-    grid_size = 12
+    grid_size = 30
     seed_val = int((bounds.north + bounds.south + bounds.east + bounds.west) * 1000) % (2**31)
     random.seed(seed_val)
 
@@ -66,21 +66,35 @@ def generate_thermal_grid(bounds: BoundingBox) -> dict:
     lon_factor = (bounds.east + bounds.west) / 2
     base_offset = (lat_factor - 39) * -0.8 + (lon_factor - 32) * 0.3
 
-    lat_step = (bounds.north - bounds.south) / (grid_size - 1) if grid_size > 1 else 0
-    lng_step = (bounds.east - bounds.west) / (grid_size - 1) if grid_size > 1 else 0
+    hotspots = []
+    for _ in range(random.randint(2, 5)):
+        hotspots.append({
+            "lat": bounds.south + random.random() * (bounds.north - bounds.south),
+            "lng": bounds.west + random.random() * (bounds.east - bounds.west),
+            "intensity": random.uniform(-6, 8),
+            "radius": random.uniform(0.15, 0.45)
+        })
 
     grid = []
     all_temps = []
     for i in range(grid_size):
         for j in range(grid_size):
-            lat = round(bounds.south + i * lat_step, 6)
-            lng = round(bounds.west + j * lng_step, 6)
-            noise = random.uniform(-3, 3)
-            grad_lat = -2 + (4 * i / (grid_size - 1)) if grid_size > 1 else 0
-            grad_lon = -1.5 + (3 * j / (grid_size - 1)) if grid_size > 1 else 0
-            temp = round(20 + base_offset + grad_lat + grad_lon + noise, 1)
+            lat = bounds.south + (bounds.north - bounds.south) * i / (grid_size - 1)
+            lng = bounds.west + (bounds.east - bounds.west) * j / (grid_size - 1)
+
+            base = 20 + base_offset
+            grad_lat = -2 + 4 * i / (grid_size - 1)
+            grad_lon = -1.5 + 3 * j / (grid_size - 1)
+
+            hotspot_effect = 0
+            for hs in hotspots:
+                dist = ((lat - hs["lat"]) ** 2 + (lng - hs["lng"]) ** 2) ** 0.5
+                hotspot_effect += hs["intensity"] * max(0, 1 - dist / hs["radius"])
+
+            noise = random.gauss(0, 1.2)
+            temp = round(base + grad_lat + grad_lon + hotspot_effect + noise, 1)
             all_temps.append(temp)
-            grid.append({"lat": lat, "lng": lng, "sicaklik": temp})
+            grid.append(temp)
 
     return {
         "bounds": {

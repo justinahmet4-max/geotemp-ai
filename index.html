@@ -7,70 +7,72 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: #0f1117; color: #e0e0e0; overflow: hidden; height: 100vh; }
-        #map { position: absolute; top: 0; left: 380px; right: 0; bottom: 0; z-index: 1; }
-        #sidebar { position: absolute; top: 0; left: 0; width: 380px; height: 100vh; background: linear-gradient(180deg, #12141d 0%, #181b27 100%); border-right: 1px solid #2a2d3a; z-index: 1000; display: flex; flex-direction: column; overflow: hidden; }
-        .sidebar-header { padding: 24px 20px 16px; border-bottom: 1px solid #2a2d3a; }
-        .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
-        .logo-icon { width: 38px; height: 38px; background: linear-gradient(135deg, #00d4ff, #0090ff); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-        .logo-text { font-size: 20px; font-weight: 700; background: linear-gradient(135deg, #00d4ff, #0090ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .subtitle { font-size: 12px; color: #6b7280; margin-left: 48px; margin-top: -2px; }
-        .controls { padding: 16px 20px; border-bottom: 1px solid #2a2d3a; }
-        .mode-toggle { display: flex; background: #1e2030; border-radius: 10px; padding: 4px; gap: 4px; }
-        .mode-btn { flex: 1; padding: 10px 8px; border: none; border-radius: 8px; background: transparent; color: #6b7280; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif; }
-        .mode-btn.active { background: linear-gradient(135deg, #00d4ff, #0090ff); color: #fff; box-shadow: 0 2px 10px rgba(0, 180, 255, 0.3); }
-        .mode-btn:hover:not(.active) { color: #e0e0e0; background: #2a2d3a; }
-        .corner-hint { padding: 10px 14px; background: #1a1d2e; border-radius: 8px; margin-top: 10px; font-size: 11px; color: #9ca3af; display: none; border: 1px solid #2a2d3a; }
-        .corner-hint.show { display: block; }
-        .corner-hint .step { display: inline-block; width: 18px; height: 18px; background: #00d4ff; color: #0f1117; border-radius: 50%; text-align: center; line-height: 18px; font-size: 10px; font-weight: 700; margin-right: 6px; }
-        .corner-hint .step.done { background: #22c55e; }
-        .info-bar { padding: 12px 20px; display: flex; align-items: center; gap: 8px; font-size: 12px; color: #6b7280; border-bottom: 1px solid #2a2d3a; }
-        .info-bar .dot { width: 6px; height: 6px; background: #00d4ff; border-radius: 50%; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-        .reports-container { flex: 1; overflow-y: auto; padding: 16px 20px; }
-        .reports-container::-webkit-scrollbar { width: 4px; }
-        .reports-container::-webkit-scrollbar-track { background: transparent; }
-        .reports-container::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 2px; }
-        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; padding: 20px; }
-        .empty-state .icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
-        .empty-state h3 { font-size: 16px; font-weight: 600; color: #9ca3af; margin-bottom: 8px; }
-        .empty-state p { font-size: 13px; color: #4b5563; line-height: 1.5; }
-        .report-card { background: #1e2030; border: 1px solid #2a2d3a; border-radius: 12px; padding: 16px; margin-bottom: 12px; animation: slideIn 0.3s ease; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .report-card h4 { font-size: 13px; font-weight: 600; color: #00d4ff; margin-bottom: 4px; }
-        .report-card .coords { font-size: 11px; color: #6b7280; margin-bottom: 12px; font-family: monospace; }
-        .report-card .summary { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-        .summary-item { background: #12141d; border-radius: 8px; padding: 10px; text-align: center; }
-        .summary-item .label { font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-        .summary-item .value { font-size: 18px; font-weight: 700; color: #e0e0e0; }
-        .summary-item .value.hot { color: #ff6b6b; }
-        .summary-item .value.cold { color: #00d4ff; }
-        .monthly-list { list-style: none; }
-        .monthly-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #2a2d3a; font-size: 12px; }
-        .monthly-list li:last-child { border-bottom: none; }
-        .monthly-list .month { color: #9ca3af; }
-        .monthly-list .temp { font-weight: 600; font-family: monospace; }
-        .temp-bar { width: 60px; height: 4px; background: #2a2d3a; border-radius: 2px; margin-left: 10px; overflow: hidden; }
-        .temp-bar-fill { height: 100%; border-radius: 2px; transition: width 0.3s ease; }
-        .temp-bar-fill.hot { background: linear-gradient(90deg, #ff9a56, #ff6b6b); }
-        .temp-bar-fill.warm { background: linear-gradient(90deg, #ffd93d, #ff9a56); }
-        .temp-bar-fill.mild { background: linear-gradient(90deg, #6bcb77, #ffd93d); }
-        .temp-bar-fill.cool { background: linear-gradient(90deg, #4d96ff, #6bcb77); }
-        .temp-bar-fill.cold { background: linear-gradient(90deg, #00d4ff, #4d96ff); }
-        .color-legend { padding: 12px 20px; border-top: 1px solid #2a2d3a; background: #12141d; }
-        .legend-title { font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-        .legend-bar { height: 12px; border-radius: 6px; background: linear-gradient(90deg, #0044ff, #00aaff, #00e5c8, #66ff66, #ccff00, #ffcc00, #ff8800, #ff4400, #cc0000); margin-bottom: 4px; }
-        .legend-labels { display: flex; justify-content: space-between; font-size: 10px; color: #6b7280; }
-        .loading-overlay { display: none; position: absolute; inset: 0; background: rgba(15, 17, 23, 0.8); backdrop-filter: blur(4px); z-index: 2000; align-items: center; justify-content: center; flex-direction: column; gap: 12px; }
-        .loading-overlay.show { display: flex; }
-        .spinner { width: 36px; height: 36px; border: 3px solid #2a2d3a; border-top-color: #00d4ff; border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .loading-text { font-size: 13px; color: #6b7280; }
-        .toast { position: fixed; bottom: 20px; right: 20px; background: #1e2030; border: 1px solid #2a2d3a; border-radius: 10px; padding: 12px 16px; font-size: 13px; color: #e0e0e0; z-index: 3000; animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); }
-        @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
-        .leaflet-container { background: #0f1117; }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Inter',sans-serif;background:#0f1117;color:#e0e0e0;overflow:hidden;height:100vh}
+        #map{position:absolute;top:0;left:380px;right:0;bottom:0;z-index:1}
+        #sidebar{position:absolute;top:0;left:0;width:380px;height:100vh;background:linear-gradient(180deg,#12141d 0%,#181b27 100%);border-right:1px solid #2a2d3a;z-index:1000;display:flex;flex-direction:column;overflow:hidden}
+        .sidebar-header{padding:24px 20px 16px;border-bottom:1px solid #2a2d3a}
+        .logo{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+        .logo-icon{width:38px;height:38px;background:linear-gradient(135deg,#00d4ff,#0090ff);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+        .logo-text{font-size:20px;font-weight:700;background:linear-gradient(135deg,#00d4ff,#0090ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .subtitle{font-size:12px;color:#6b7280;margin-left:48px;margin-top:-2px}
+        .controls{padding:16px 20px;border-bottom:1px solid #2a2d3a}
+        .mode-toggle{display:flex;background:#1e2030;border-radius:10px;padding:4px;gap:4px}
+        .mode-btn{flex:1;padding:10px 8px;border:none;border-radius:8px;background:transparent;color:#6b7280;font-size:11px;font-weight:500;cursor:pointer;transition:all 0.2s;font-family:'Inter',sans-serif}
+        .mode-btn.active{background:linear-gradient(135deg,#00d4ff,#0090ff);color:#fff;box-shadow:0 2px 10px rgba(0,180,255,0.3)}
+        .mode-btn:hover:not(.active){color:#e0e0e0;background:#2a2d3a}
+        .corner-hint{padding:10px 14px;background:#1a1d2e;border-radius:8px;margin-top:10px;font-size:11px;color:#9ca3af;display:none;border:1px solid #2a2d3a}
+        .corner-hint.show{display:block}
+        .corner-hint .step{display:inline-block;width:18px;height:18px;background:#00d4ff;color:#0f1117;border-radius:50%;text-align:center;line-height:18px;font-size:10px;font-weight:700;margin-right:6px}
+        .corner-hint .step.done{background:#22c55e}
+        .info-bar{padding:12px 20px;display:flex;align-items:center;gap:8px;font-size:12px;color:#6b7280;border-bottom:1px solid #2a2d3a}
+        .info-bar .dot{width:6px;height:6px;background:#00d4ff;border-radius:50%;animation:pulse 2s infinite}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+        .reports-container{flex:1;overflow-y:auto;padding:16px 20px}
+        .reports-container::-webkit-scrollbar{width:4px}
+        .reports-container::-webkit-scrollbar-track{background:transparent}
+        .reports-container::-webkit-scrollbar-thumb{background:#2a2d3a;border-radius:2px}
+        .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;padding:20px}
+        .empty-state .icon{font-size:48px;margin-bottom:16px;opacity:0.3}
+        .empty-state h3{font-size:16px;font-weight:600;color:#9ca3af;margin-bottom:8px}
+        .empty-state p{font-size:13px;color:#4b5563;line-height:1.5}
+        .report-card{background:#1e2030;border:1px solid #2a2d3a;border-radius:12px;padding:16px;margin-bottom:12px;animation:slideIn 0.3s ease}
+        @keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .report-card h4{font-size:13px;font-weight:600;color:#00d4ff;margin-bottom:4px}
+        .report-card .coords{font-size:11px;color:#6b7280;margin-bottom:12px;font-family:monospace}
+        .report-card .summary{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+        .summary-item{background:#12141d;border-radius:8px;padding:10px;text-align:center}
+        .summary-item .label{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
+        .summary-item .value{font-size:18px;font-weight:700;color:#e0e0e0}
+        .summary-item .value.hot{color:#ff6b6b}
+        .summary-item .value.cold{color:#00d4ff}
+        .monthly-list{list-style:none}
+        .monthly-list li{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #2a2d3a;font-size:12px}
+        .monthly-list li:last-child{border-bottom:none}
+        .monthly-list .month{color:#9ca3af}
+        .monthly-list .temp{font-weight:600;font-family:monospace}
+        .temp-bar{width:60px;height:4px;background:#2a2d3a;border-radius:2px;margin-left:10px;overflow:hidden}
+        .temp-bar-fill{height:100%;border-radius:2px;transition:width 0.3s ease}
+        .temp-bar-fill.hot{background:linear-gradient(90deg,#ff9a56,#ff6b6b)}
+        .temp-bar-fill.warm{background:linear-gradient(90deg,#ffd93d,#ff9a56)}
+        .temp-bar-fill.mild{background:linear-gradient(90deg,#6bcb77,#ffd93d)}
+        .temp-bar-fill.cool{background:linear-gradient(90deg,#4d96ff,#6bcb77)}
+        .temp-bar-fill.cold{background:linear-gradient(90deg,#00d4ff,#4d96ff)}
+        .color-legend{padding:12px 20px;border-top:1px solid #2a2d3a;background:#12141d}
+        .legend-title{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
+        .legend-bar{height:12px;border-radius:6px;background:linear-gradient(90deg,#0044ff,#00aaff,#00e5c8,#66ff66,#ccff00,#ffcc00,#ff8800,#ff4400,#cc0000);margin-bottom:4px}
+        .legend-labels{display:flex;justify-content:space-between;font-size:10px;color:#6b7280}
+        .loading-overlay{display:none;position:absolute;inset:0;background:rgba(15,17,23,0.8);backdrop-filter:blur(4px);z-index:2000;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+        .loading-overlay.show{display:flex}
+        .spinner{width:36px;height:36px;border:3px solid #2a2d3a;border-top-color:#00d4ff;border-radius:50%;animation:spin 0.8s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .loading-text{font-size:13px;color:#6b7280}
+        .toast{position:fixed;bottom:20px;right:20px;background:#1e2030;border:1px solid #2a2d3a;border-radius:10px;padding:12px 16px;font-size:13px;color:#e0e0e0;z-index:3000;animation:toastIn 0.3s ease,toastOut 0.3s ease 2.7s;box-shadow:0 4px 20px rgba(0,0,0,0.4)}
+        @keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes toastOut{from{opacity:1}to{opacity:0}}
+        .leaflet-container{background:#0f1117}
+        .thermal-tooltip{background:rgba(15,17,23,0.9)!important;border:1px solid #00d4ff!important;color:#e0e0e0!important;border-radius:6px!important;font-family:'Inter',sans-serif!important;font-size:12px!important;padding:4px 8px!important}
+        .thermal-tooltip::before{border-top-color:rgba(15,17,23,0.9)!important}
     </style>
 </head>
 <body>
@@ -115,10 +117,10 @@
         <div class="legend-title">Yer Altisi Sicaklik Skalasi</div>
         <div class="legend-bar"></div>
         <div class="legend-labels">
-            <span id="legend-min">-10°C</span>
-            <span>10°C</span>
-            <span>25°C</span>
-            <span id="legend-max">40°C</span>
+            <span id="legend-min">-10 C</span>
+            <span>10 C</span>
+            <span>25 C</span>
+            <span id="legend-max">40 C</span>
         </div>
     </div>
 
@@ -132,221 +134,253 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    let map;
-    let currentMode = 'click';
-    let cornerPoints = [];
-    let cornerMarkers = [];
-    let tempLayer = null;
-    let rectDraw = null;
-    let rectStart = null;
+var map, currentMode='click', cornerPoints=[], cornerMarkers=[], tempLayer=null, rectDraw=null, rectStart=null, thermalOverlay=null;
 
-    function initMap() {
-        map = L.map('map', { center: [39.9, 32.8], zoom: 6, zoomControl: false, attributionControl: false });
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
-        L.control.zoom({ position: 'topright' }).addTo(map);
+function initMap(){
+    map=L.map('map',{center:[39.9,32.8],zoom:6,zoomControl:false,attributionControl:false});
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(map);
+    L.control.zoom({position:'topright'}).addTo(map);
 
-        map.on('click', function(e) {
-            if (currentMode === 'click') {
-                analyzePoint(e.latlng.lat, e.latlng.lng);
-            } else if (currentMode === 'corner') {
-                addCornerPoint(e.latlng.lat, e.latlng.lng);
+    map.on('click',function(e){
+        if(currentMode==='click')analyzePoint(e.latlng.lat,e.latlng.lng);
+        else if(currentMode==='corner')addCornerPoint(e.latlng.lat,e.latlng.lng);
+    });
+    map.on('mousedown',function(e){if(currentMode==='rect'){rectStart=e.latlng;if(rectDraw)map.removeLayer(rectDraw);}});
+    map.on('mouseup',function(e){
+        if(currentMode==='rect'&&rectStart){
+            var bounds=L.latLngBounds(rectStart,e.latlng);
+            rectDraw=L.rectangle(bounds,{color:'#00d4ff',weight:2,fillColor:'#00d4ff',fillOpacity:0.15,dashArray:'5,5'}).addTo(map);
+            var sw=bounds.getSouthWest(),ne=bounds.getNorthEast();
+            analyzeArea(sw.lat,sw.lng,ne.lat,ne.lng);
+            rectStart=null;
+        }
+    });
+}
+
+function setMode(mode){
+    currentMode=mode;
+    document.querySelectorAll('.mode-btn').forEach(function(b){b.classList.remove('active')});
+    document.getElementById('mode-'+mode).classList.add('active');
+    document.getElementById('corner-hint').classList.toggle('show',mode==='corner');
+    if(mode==='corner'){clearCornerPoints();document.getElementById('status-text').textContent='4 kose secin: Sol ust';}
+    else{clearCornerPoints();}
+    if(mode==='click')document.getElementById('status-text').textContent='Haritada bir nokta secin';
+    if(mode==='rect')document.getElementById('status-text').textContent='Surukleyerek alan secin';
+}
+
+function clearCornerPoints(){
+    cornerPoints=[];
+    cornerMarkers.forEach(function(m){map.removeLayer(m)});
+    cornerMarkers=[];
+    for(var i=1;i<=4;i++){var el=document.getElementById('step-'+i);if(el)el.classList.remove('done');}
+}
+
+function addCornerPoint(lat,lng){
+    var num=cornerPoints.length+1;
+    var colors=['#00d4ff','#ff6b6b','#22c55e','#ffd93d'];
+    var marker=L.circleMarker([lat,lng],{radius:8,color:colors[num-1],fillColor:colors[num-1],fillOpacity:0.9,weight:2}).addTo(map);
+    marker.bindTooltip('Kose '+num,{permanent:true,direction:'top',offset:[0,-10],className:'corner-tooltip'}).openTooltip();
+    cornerMarkers.push(marker);
+    cornerPoints.push({lat:lat,lng:lng});
+    var el=document.getElementById('step-'+num);if(el)el.classList.add('done');
+    var labels=['Sol ust','Sag ust','Sol alt','Sag alt'];
+    if(num<4)document.getElementById('status-text').textContent='Kose '+num+'/4 tamam - Siradaki: '+labels[num];
+    if(num===4){
+        document.getElementById('status-text').textContent='4 kose secildi, analiz baslatiliyor...';
+        var lats=cornerPoints.map(function(p){return p.lat});
+        var lngs=cornerPoints.map(function(p){return p.lng});
+        var north=Math.max.apply(null,lats),south=Math.min.apply(null,lats);
+        var east=Math.max.apply(null,lngs),west=Math.min.apply(null,lngs);
+        var bounds=L.latLngBounds([south,west],[north,east]);
+        rectDraw=L.rectangle(bounds,{color:'#00d4ff',weight:2,fillColor:'#00d4ff',fillOpacity:0.1,dashArray:'8,4'}).addTo(map);
+        analyzeArea(north,west,south,east);
+        clearCornerPoints();
+    }
+}
+
+async function analyzePoint(lat,lng){
+    showLoading(true);
+    try{
+        var res=await fetch('/api/analyze-temperature',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({north:lat+0.05,south:lat-0.05,east:lng+0.05,west:lng-0.05})});
+        var data=await res.json();
+        L.circleMarker([lat,lng],{radius:6,color:'#00d4ff',fillColor:'#00d4ff',fillOpacity:0.8,weight:2}).addTo(map);
+        addReport(data);
+        showToast(data.monthly_data.length+' aylik veri yuklendi');
+    }catch(err){showToast('Hata: Backend baglantisi kurulamadi');}
+    showLoading(false);
+}
+
+async function analyzeArea(north,west,south,east){
+    showLoading(true);
+    try{
+        var tempRes=await fetch('/api/analyze-temperature',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({north:north,south:south,east:east,west:west})});
+        var gridRes=await fetch('/api/thermal-grid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({north:north,south:south,east:east,west:west})});
+        var tempData=await tempRes.json();
+        var gridData=await gridRes.json();
+        addReport(tempData);
+        renderSmoothThermal(gridData);
+        showToast('Termal harita olusturuldu - '+tempData.region);
+    }catch(err){showToast('Hata: Backend baglantisi kurulamadi');}
+    showLoading(false);
+}
+
+function tempToColor(temp,minT,maxT){
+    var t=Math.max(0,Math.min(1,(temp-minT)/(maxT-minT)));
+    var stops=[
+        [0,0x00,0x44,0xff],[0.12,0x00,0xaa,0xff],[0.25,0x00,0xe5,0xc8],
+        [0.37,0x66,0xff,0x66],[0.5,0xcc,0xff,0x00],[0.62,0xff,0xcc,0x00],
+        [0.75,0xff,0x88,0x00],[0.87,0xff,0x44,0x00],[1.0,0xcc,0x00,0x00]
+    ];
+    var i=0;
+    while(i<stops.length-1&&stops[i+1][0]<t)i++;
+    if(i>=stops.length-1)return'rgb('+stops[stops.length-1][1]+','+stops[stops.length-1][2]+','+stops[stops.length-1][3]+')';
+    var f=(t-stops[i][0])/(stops[i+1][0]-stops[i][0]);
+    f=f*f*(3-2*f);
+    var r=Math.round(stops[i][1]+(stops[i+1][1]-stops[i][1])*f);
+    var g=Math.round(stops[i][2]+(stops[i+1][2]-stops[i][2])*f);
+    var b=Math.round(stops[i][3]+(stops[i+1][3]-stops[i][3])*f);
+    return'rgb('+r+','+g+','+b+')';
+}
+
+function bilinearInterpolate(grid,gs,x,y){
+    var x0=Math.floor(x),x1=Math.min(x0+1,gs-1);
+    var y0=Math.floor(y),y1=Math.min(y0+1,gs-1);
+    var fx=x-x0,fy=y-y0;
+    var v00=grid[y0*gs+x0],v10=grid[y0*gs+x1];
+    var v01=grid[y1*gs+x0],v11=grid[y1*gs+x1];
+    var top=v00+(v10-v00)*fx;
+    var bot=v01+(v11-v01)*fx;
+    return top+(bot-top)*fy;
+}
+
+function renderSmoothThermal(data){
+    if(thermalOverlay){map.removeLayer(thermalOverlay);thermalOverlay=null;}
+    if(tempLayer){map.removeLayer(tempLayer);tempLayer=null;}
+
+    var b=data.bounds,gs=data.grid_size,grid=data.grid;
+    var minT=data.min_temp,maxT=data.max_temp;
+
+    document.getElementById('legend-min').textContent=minT+' C';
+    document.getElementById('legend-max').textContent=maxT+' C';
+    document.getElementById('color-legend').style.display='block';
+
+    var CanvasLayer=L.Layer.extend({
+        onAdd:function(map){
+            this._map=map;
+            var pane=this.getPane();
+            this._canvas=document.createElement('canvas');
+            this._canvas.style.position='absolute';
+            this._canvas.style.pointerEvents='none';
+            this._canvas.style.opacity='0.6';
+            pane.appendChild(this._canvas);
+            this._tooltip=document.createElement('div');
+            this._tooltip.style.cssText='position:absolute;display:none;background:rgba(15,17,23,0.9);border:1px solid #00d4ff;color:#e0e0e0;padding:4px 8px;border-radius:6px;font-size:12px;font-family:Inter,sans-serif;pointer-events:none;z-index:9999;white-space:nowrap;';
+            pane.appendChild(this._tooltip);
+            this._draw();
+            map.on('moveend zoomend',this._draw,this);
+            map.on('mousemove',this._onMouseMove,this);
+        },
+        onRemove:function(map){
+            map.off('moveend zoomend',this._draw,this);
+            map.off('mousemove',this._onMouseMove,this);
+            if(this._canvas.parentNode)this._canvas.parentNode.removeChild(this._canvas);
+            if(this._tooltip.parentNode)this._tooltip.parentNode.removeChild(this._tooltip);
+        },
+        _onMouseMove:function(e){
+            var lat=e.latlng.lat,lng=e.latlng.lng;
+            if(lat<b.south||lat>b.north||lng<b.west||lng>b.east){
+                this._tooltip.style.display='none';
+                return;
             }
-        });
+            var gx=(lng-b.west)/(b.east-b.west)*(gs-1);
+            var gy=(lat-b.south)/(b.north-b.south)*(gs-1);
+            var temp=bilinearInterpolate(grid,gs,gx,gy);
+            temp=Math.round(temp*10)/10;
+            var px=e.originalEvent.clientX-this.getPane().getBoundingClientRect().left+15;
+            var py=e.originalEvent.clientY-this.getPane().getBoundingClientRect().top-10;
+            this._tooltip.innerHTML='<b>'+temp+'</b> C';
+            this._tooltip.style.left=px+'px';
+            this._tooltip.style.top=py+'px';
+            this._tooltip.style.display='block';
+        },
+        _draw:function(){
+            if(!this._map)return;
+            var map=this._map;
+            var nw=map.latLngToContainerPoint(L.latLng(b.north,b.west));
+            var se=map.latLngToContainerPoint(L.latLng(b.south,b.east));
+            var w=Math.abs(se.x-nw.x);
+            var h=Math.abs(se.y-nw.y);
+            if(w<2||h<2)return;
 
-        map.on('mousedown', function(e) {
-            if (currentMode === 'rect') { rectStart = e.latlng; if (rectDraw) map.removeLayer(rectDraw); }
-        });
+            var renderW=Math.max(w,200);
+            var renderH=Math.max(h,200);
+            this._canvas.width=renderW;
+            this._canvas.height=renderH;
+            this._canvas.style.width=w+'px';
+            this._canvas.style.height=h+'px';
+            this._canvas.style.left=Math.min(nw.x,se.x)+'px';
+            this._canvas.style.top=Math.min(nw.y,se.y)+'px';
 
-        map.on('mouseup', function(e) {
-            if (currentMode === 'rect' && rectStart) {
-                const bounds = L.latLngBounds(rectStart, e.latlng);
-                rectDraw = L.rectangle(bounds, { color: '#00d4ff', weight: 2, fillColor: '#00d4ff', fillOpacity: 0.15, dashArray: '5, 5' }).addTo(map);
-                const sw = bounds.getSouthWest();
-                const ne = bounds.getNorthEast();
-                analyzeArea(sw.lat, sw.lng, ne.lat, ne.lng);
-                rectStart = null;
+            var ctx=this._canvas.getContext('2d');
+            var imgData=ctx.createImageData(renderW,renderH);
+
+            for(var py=0;py<renderH;py++){
+                for(var px=0;px<renderW;px++){
+                    var gx=(px/renderW)*(gs-1);
+                    var gy=(1-py/renderH)*(gs-1);
+                    var temp=bilinearInterpolate(grid,gs,gx,gy);
+                    var t=Math.max(0,Math.min(1,(temp-minT)/(maxT-minT)));
+                    var stops=[
+                        [0,0,0x44,0xff],[0.12,0,0xaa,0xff],[0.25,0,0xe5,0xc8],
+                        [0.37,0x66,0xff,0x66],[0.5,0xcc,0xff,0],[0.62,0xff,0xcc,0],
+                        [0.75,0xff,0x88,0],[0.87,0xff,0x44,0],[1.0,0xcc,0,0]
+                    ];
+                    var si=0;
+                    while(si<stops.length-1&&stops[si+1][0]<t)si++;
+                    if(si>=stops.length-1)si=stops.length-2;
+                    var f=(t-stops[si][0])/(stops[si+1][0]-stops[si][0]);
+                    f=f*f*(3-2*f);
+                    var idx=(py*renderW+px)*4;
+                    imgData.data[idx]=Math.round(stops[si][1]+(stops[si+1][1]-stops[si][1])*f);
+                    imgData.data[idx+1]=Math.round(stops[si][2]+(stops[si+1][2]-stops[si][2])*f);
+                    imgData.data[idx+2]=Math.round(stops[si][3]+(stops[si+1][3]-stops[si][3])*f);
+                    imgData.data[idx+3]=200;
+                }
             }
-        });
-    }
-
-    function setMode(mode) {
-        currentMode = mode;
-        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('mode-' + mode).classList.add('active');
-        document.getElementById('corner-hint').classList.toggle('show', mode === 'corner');
-
-        if (mode === 'corner') {
-            clearCornerPoints();
-            document.getElementById('status-text').textContent = '4 kose secin: Sol ust';
-        } else {
-            clearCornerPoints();
+            ctx.putImageData(imgData,0,0);
         }
-        if (mode === 'click') document.getElementById('status-text').textContent = 'Haritada bir nokta secin';
-        if (mode === 'rect') document.getElementById('status-text').textContent = 'Surukleyerek alan secin';
-    }
+    });
 
-    function clearCornerPoints() {
-        cornerPoints = [];
-        cornerMarkers.forEach(m => map.removeLayer(m));
-        cornerMarkers = [];
-        for (let i = 1; i <= 4; i++) {
-            const el = document.getElementById('step-' + i);
-            if (el) el.classList.remove('done');
-        }
-    }
+    thermalOverlay=new CanvasLayer();
+    thermalOverlay.addTo(map);
+}
 
-    function addCornerPoint(lat, lng) {
-        const num = cornerPoints.length + 1;
-        const colors = ['#00d4ff', '#ff6b6b', '#22c55e', '#ffd93d'];
-        const marker = L.circleMarker([lat, lng], { radius: 8, color: colors[num-1], fillColor: colors[num-1], fillOpacity: 0.9, weight: 2 }).addTo(map);
-        marker.bindTooltip('Kose ' + num, { permanent: true, direction: 'top', offset: [0, -10], className: 'corner-tooltip' }).openTooltip();
-        cornerMarkers.push(marker);
-        cornerPoints.push({ lat, lng });
+function addReport(data){
+    var empty=document.getElementById('empty-state');if(empty)empty.remove();
+    var container=document.getElementById('reports');
+    var temps=data.monthly_data.map(function(d){return d.sicaklik});
+    var avg=(temps.reduce(function(a,b){return a+b},0)/temps.length).toFixed(1);
+    var max=Math.max.apply(null,temps).toFixed(1);
+    var min=Math.min.apply(null,temps).toFixed(1);
+    var getTempClass=function(t){if(t>=30)return'hot';if(t>=20)return'warm';if(t>=10)return'mild';if(t>=0)return'cool';return'cold';};
+    var getBarWidth=function(t){return Math.min(100,Math.max(5,((t+10)/50)*100));};
+    var monthlyHTML=data.monthly_data.map(function(d){
+        return '<li><span class="month">'+d.ay+'</span><span style="display:flex;align-items:center;"><span class="temp" style="color:'+(d.sicaklik>=25?'#ff6b6b':d.sicaklik>=10?'#ffd93d':'#00d4ff')+'">'+d.sicaklik+' C</span><span class="temp-bar"><span class="temp-bar-fill '+getTempClass(d.sicaklik)+'" style="width:'+getBarWidth(d.sicaklik)+'%"></span></span></span></li>';
+    }).join('');
+    var card=document.createElement('div');
+    card.className='report-card';
+    card.innerHTML='<h4>'+data.region+'</h4><div class="coords">'+data.bounds.north.toFixed(4)+'N, '+data.bounds.east.toFixed(4)+'E</div><div class="summary"><div class="summary-item"><div class="label">Ortalama</div><div class="value">'+avg+'</div></div><div class="summary-item"><div class="label">En Sicak</div><div class="value hot">'+max+'</div></div><div class="summary-item"><div class="label">En soguk</div><div class="value cold">'+min+'</div></div><div class="summary-item"><div class="label">Fark</div><div class="value">'+(max-min).toFixed(1)+'</div></div></div><ul class="monthly-list">'+monthlyHTML+'</ul>';
+    container.insertBefore(card,container.firstChild);
+    document.getElementById('status-text').textContent='Analiz tamamlandi - '+data.region;
+}
 
-        const el = document.getElementById('step-' + num);
-        if (el) el.classList.add('done');
+function showLoading(show){document.getElementById('loading').classList.toggle('show',show);}
+function showToast(msg){
+    var toast=document.createElement('div');toast.className='toast';toast.textContent=msg;
+    document.body.appendChild(toast);setTimeout(function(){toast.remove()},3000);
+}
 
-        const labels = ['Sol ust', 'Sag ust', 'Sol alt', 'Sag alt'];
-        if (num < 4) {
-            document.getElementById('status-text').textContent = 'Kose ' + num + '/4 tamam - Siradaki: ' + labels[num];
-        }
-
-        if (num === 4) {
-            document.getElementById('status-text').textContent = '4 kose secildi, analiz baslatiliyor...';
-            const lats = cornerPoints.map(p => p.lat);
-            const lngs = cornerPoints.map(p => p.lng);
-            const north = Math.max(...lats);
-            const south = Math.min(...lats);
-            const east = Math.max(...lngs);
-            const west = Math.min(...lngs);
-
-            const bounds = L.latLngBounds([south, west], [north, east]);
-            rectDraw = L.rectangle(bounds, { color: '#00d4ff', weight: 2, fillColor: '#00d4ff', fillOpacity: 0.1, dashArray: '8, 4' }).addTo(map);
-
-            analyzeArea(north, west, south, east);
-            clearCornerPoints();
-        }
-    }
-
-    async function analyzePoint(lat, lng) {
-        showLoading(true);
-        try {
-            const res = await fetch('/api/analyze-temperature', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ north: lat + 0.05, south: lat - 0.05, east: lng + 0.05, west: lng - 0.05 })
-            });
-            const data = await res.json();
-            const marker = L.circleMarker([lat, lng], { radius: 6, color: '#00d4ff', fillColor: '#00d4ff', fillOpacity: 0.8, weight: 2 }).addTo(map);
-            addReport(data);
-            showToast(data.monthly_data.length + ' aylik veri yuklendi');
-        } catch (err) { showToast('Hata: Backend baglantisi kurulamadi'); }
-        showLoading(false);
-    }
-
-    async function analyzeArea(north, west, south, east) {
-        showLoading(true);
-        try {
-            const [tempRes, gridRes] = await Promise.all([
-                fetch('/api/analyze-temperature', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ north, south, east, west })
-                }),
-                fetch('/api/thermal-grid', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ north, south, east, west })
-                })
-            ]);
-            const tempData = await tempRes.json();
-            const gridData = await gridRes.json();
-            addReport(tempData);
-            renderThermalGrid(gridData);
-            showToast('Termal harita olusturuldu - ' + tempData.region);
-        } catch (err) { showToast('Hata: Backend baglantisi kurulamadi'); }
-        showLoading(false);
-    }
-
-    function tempToColor(temp, minT, maxT) {
-        const t = Math.max(0, Math.min(1, (temp - minT) / (maxT - minT)));
-        const colors = [
-            [0, 68, 255], [0, 170, 255], [0, 229, 200],
-            [102, 255, 102], [204, 255, 0], [255, 204, 0],
-            [255, 136, 0], [255, 68, 0], [204, 0, 0]
-        ];
-        const idx = t * (colors.length - 1);
-        const i = Math.floor(idx);
-        const f = idx - i;
-        const c1 = colors[Math.min(i, colors.length - 1)];
-        const c2 = colors[Math.min(i + 1, colors.length - 1)];
-        const r = Math.round(c1[0] + (c2[0] - c1[0]) * f);
-        const g = Math.round(c1[1] + (c2[1] - c1[1]) * f);
-        const b = Math.round(c1[2] + (c2[2] - c1[2]) * f);
-        return 'rgb(' + r + ',' + g + ',' + b + ')';
-    }
-
-    function renderThermalGrid(data) {
-        if (tempLayer) map.removeLayer(tempLayer);
-        tempLayer = L.layerGroup().addTo(map);
-
-        const gs = data.grid_size;
-        const b = data.bounds;
-        const cellLatH = (b.north - b.south) / gs;
-        const cellLngW = (b.east - b.west) / gs;
-        const minT = data.min_temp;
-        const maxT = data.max_temp;
-
-        document.getElementById('legend-min').textContent = minT + '°C';
-        document.getElementById('legend-max').textContent = maxT + '°C';
-        document.getElementById('color-legend').style.display = 'block';
-
-        data.grid.forEach(function(cell) {
-            const color = tempToColor(cell.sicaklik, minT, maxT);
-            const sw = [cell.lat - cellLatH / 2, cell.lng - cellLngW / 2];
-            const ne = [cell.lat + cellLatH / 2, cell.lng + cellLngW / 2];
-            const rect = L.rectangle([sw, ne], {
-                color: 'transparent',
-                weight: 0,
-                fillColor: color,
-                fillOpacity: 0.55,
-                interactive: true
-            }).addTo(tempLayer);
-            rect.bindTooltip(cell.sicaklik + '°C', { className: 'thermal-tooltip' });
-        });
-    }
-
-    function addReport(data) {
-        const empty = document.getElementById('empty-state');
-        if (empty) empty.remove();
-        const container = document.getElementById('reports');
-        const temps = data.monthly_data.map(function(d) { return d.sicaklik; });
-        const avg = (temps.reduce(function(a, b) { return a + b; }, 0) / temps.length).toFixed(1);
-        const max = Math.max.apply(null, temps).toFixed(1);
-        const min = Math.min.apply(null, temps).toFixed(1);
-
-        const getTempClass = function(t) { if (t >= 30) return 'hot'; if (t >= 20) return 'warm'; if (t >= 10) return 'mild'; if (t >= 0) return 'cool'; return 'cold'; };
-        const getBarWidth = function(t) { return Math.min(100, Math.max(5, ((t + 10) / 50) * 100)); };
-
-        const monthlyHTML = data.monthly_data.map(function(d) {
-            return '<li><span class="month">' + d.ay + '</span><span style="display:flex;align-items:center;"><span class="temp" style="color: ' + (d.sicaklik >= 25 ? '#ff6b6b' : d.sicaklik >= 10 ? '#ffd93d' : '#00d4ff') + '">' + d.sicaklik + '°C</span><span class="temp-bar"><span class="temp-bar-fill ' + getTempClass(d.sicaklik) + '" style="width: ' + getBarWidth(d.sicaklik) + '%"></span></span></span></li>';
-        }).join('');
-
-        const card = document.createElement('div');
-        card.className = 'report-card';
-        card.innerHTML = '<h4>' + data.region + '</h4><div class="coords">' + data.bounds.north.toFixed(4) + 'N, ' + data.bounds.east.toFixed(4) + 'E</div><div class="summary"><div class="summary-item"><div class="label">Ortalama</div><div class="value">' + avg + '</div></div><div class="summary-item"><div class="label">En Sicak</div><div class="value hot">' + max + '</div></div><div class="summary-item"><div class="label">En soguk</div><div class="value cold">' + min + '</div></div><div class="summary-item"><div class="label">Fark</div><div class="value">' + (max - min).toFixed(1) + '</div></div></div><ul class="monthly-list">' + monthlyHTML + '</ul>';
-        container.insertBefore(card, container.firstChild);
-        document.getElementById('status-text').textContent = 'Analiz tamamlandi - ' + data.region;
-    }
-
-    function showLoading(show) { document.getElementById('loading').classList.toggle('show', show); }
-    function showToast(msg) {
-        const toast = document.createElement('div');
-        toast.className = 'toast';
-        toast.textContent = msg;
-        document.body.appendChild(toast);
-        setTimeout(function() { toast.remove(); }, 3000);
-    }
-
-    initMap();
+initMap();
 </script>
 </body>
 </html>
