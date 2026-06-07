@@ -62,6 +62,25 @@
         .legend-title{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
         .legend-bar{height:12px;border-radius:6px;background:linear-gradient(90deg,#0044ff,#00aaff,#00e5c8,#66ff66,#ccff00,#ffcc00,#ff8800,#ff4400,#cc0000);margin-bottom:4px}
         .legend-labels{display:flex;justify-content:space-between;font-size:10px;color:#6b7280}
+        .layers-section{padding:12px 20px;border-top:1px solid #2a2d3a}
+        .layers-title{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
+        .layer-group{margin-bottom:10px}
+        .layer-group-label{font-size:11px;color:#9ca3af;font-weight:600;margin-bottom:6px}
+        .layer-btn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border:1px solid #2a2d3a;border-radius:8px;background:#1e2030;color:#6b7280;font-size:11px;cursor:pointer;transition:all 0.2s;margin-bottom:4px;font-family:'Inter',sans-serif}
+        .layer-btn:hover{border-color:#00d4ff;color:#e0e0e0}
+        .layer-btn.active{border-color:#00d4ff;background:rgba(0,212,255,0.1);color:#00d4ff}
+        .layer-btn .ldot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+        .subsurface-panel{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(18,20,29,0.95);border:1px solid #2a2d3a;border-radius:12px;padding:16px 20px;z-index:1000;display:none;min-width:420px}
+        .subsurface-panel.show{display:block}
+        .subsurface-title{font-size:12px;font-weight:600;color:#00d4ff;margin-bottom:10px}
+        .subsurface-layers{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+        .sub-layer-btn{padding:6px 12px;border:1px solid #2a2d3a;border-radius:6px;background:#1e2030;color:#6b7280;font-size:10px;cursor:pointer;transition:all 0.2s;font-family:'Inter',sans-serif}
+        .sub-layer-btn:hover{border-color:#00d4ff;color:#e0e0e0}
+        .sub-layer-btn.active{border-color:#00d4ff;background:rgba(0,212,255,0.15);color:#00d4ff}
+        .depth-indicator{display:flex;align-items:center;gap:8px;padding-top:10px;border-top:1px solid #2a2d3a}
+        .depth-slider{flex:1;-webkit-appearance:none;height:4px;background:#2a2d3a;border-radius:2px;outline:none}
+        .depth-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:#00d4ff;border-radius:50%;cursor:pointer}
+        .depth-label{font-size:10px;color:#6b7280;min-width:60px}
         .loading-overlay{display:none;position:absolute;inset:0;background:rgba(15,17,23,0.8);backdrop-filter:blur(4px);z-index:2000;align-items:center;justify-content:center;flex-direction:column;gap:12px}
         .loading-overlay.show{display:flex}
         .spinner{width:36px;height:36px;border:3px solid #2a2d3a;border-top-color:#00d4ff;border-radius:50%;animation:spin 0.8s linear infinite}
@@ -71,8 +90,6 @@
         @keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         @keyframes toastOut{from{opacity:1}to{opacity:0}}
         .leaflet-container{background:#0f1117}
-        .thermal-tooltip{background:rgba(15,17,23,0.9)!important;border:1px solid #00d4ff!important;color:#e0e0e0!important;border-radius:6px!important;font-family:'Inter',sans-serif!important;font-size:12px!important;padding:4px 8px!important}
-        .thermal-tooltip::before{border-top-color:rgba(15,17,23,0.9)!important}
     </style>
 </head>
 <body>
@@ -88,15 +105,16 @@
 
     <div class="controls">
         <div class="mode-toggle">
-            <button class="mode-btn active" id="mode-click" onclick="setMode('click')">&#128205; Tek Nokta</button>
+            <button class="mode-btn active" id="mode-click" onclick="setMode('click')">&#128205; Nokta</button>
             <button class="mode-btn" id="mode-corner" onclick="setMode('corner')">&#128311; 4 Kose</button>
             <button class="mode-btn" id="mode-rect" onclick="setMode('rect')">&#11036; Surukle</button>
+            <button class="mode-btn" id="mode-sub" onclick="setMode('sub')">&#127793; Yeralti</button>
         </div>
         <div class="corner-hint" id="corner-hint">
-            <div><span class="step" id="step-1">1</span> Sol ust koseyi tiklayin</div>
-            <div style="margin-top:4px"><span class="step" id="step-2">2</span> Sag ust koseyi tiklayin</div>
-            <div style="margin-top:4px"><span class="step" id="step-3">3</span> Sol alt koseyi tiklayin</div>
-            <div style="margin-top:4px"><span class="step" id="step-4">4</span> Sag alt koseyi tiklayin</div>
+            <div><span class="step" id="step-1">1</span> Sol ust kose</div>
+            <div style="margin-top:4px"><span class="step" id="step-2">2</span> Sag ust kose</div>
+            <div style="margin-top:4px"><span class="step" id="step-3">3</span> Sol alt kose</div>
+            <div style="margin-top:4px"><span class="step" id="step-4">4</span> Sag alt kose</div>
         </div>
     </div>
 
@@ -105,45 +123,87 @@
         <span id="status-text">Haritada bir alan secin</span>
     </div>
 
+    <div class="layers-section">
+        <div class="layers-title">Harita Katmanlari</div>
+        <div class="layer-group">
+            <div class="layer-group-label">Temel Harita</div>
+            <button class="layer-btn active" id="base-dark" onclick="setBaseLayer('dark')"><span class="ldot" style="background:#1a1d2e"></span> Karanlik Harita</button>
+            <button class="layer-btn" id="base-satellite" onclick="setBaseLayer('satellite')"><span class="ldot" style="background:#2d5a27"></span> Canli Uydu (Esri)</button>
+            <button class="layer-btn" id="base-topo" onclick="setBaseLayer('topo')"><span class="ldot" style="background:#c4a882"></span> Topografik</button>
+            <button class="layer-btn" id="base-terrain" onclick="setBaseLayer('terrain')"><span class="ldot" style="background:#6b8e5a"></span> Arazi</button>
+        </div>
+        <div class="layer-group">
+            <div class="layer-group-label">Veri Katmanlari</div>
+            <button class="layer-btn" id="overlay-thermal" onclick="toggleOverlay('thermal')"><span class="ldot" style="background:linear-gradient(90deg,#00aaff,#ff4400)"></span> Termal Harita</button>
+            <button class="layer-btn" id="overlay-ndvi" onclick="toggleOverlay('ndvi')"><span class="ldot" style="background:#66ff66"></span> Bitki Orani (NDVI)</button>
+            <button class="layer-btn" id="overlay-moisture" onclick="toggleOverlay('moisture')"><span class="ldot" style="background:#0088ff"></span> Nem / Su Orani</button>
+            <button class="layer-btn" id="overlay-topsoil" onclick="toggleOverlay('topsoil')"><span class="ldot" style="background:#8B4513"></span> Toprak Turu</button>
+            <button class="layer-btn" id="overlay-sub" onclick="toggleOverlay('sub')"><span class="ldot" style="background:#ff8800"></span> Yeralti Isi</button>
+        </div>
+    </div>
+
     <div class="reports-container" id="reports">
         <div class="empty-state" id="empty-state">
             <div class="icon">&#128752;&#65039;</div>
             <h3>Henuz Veri Yok</h3>
-            <p>Haritada 4 kose secerek<br>termal harita olusturun</p>
+            <p>Haritada bir alan secerek<br>analiz baslatin</p>
         </div>
     </div>
 
     <div class="color-legend" id="color-legend" style="display:none">
-        <div class="legend-title">Yer Altisi Sicaklik Skalasi</div>
-        <div class="legend-bar"></div>
+        <div class="legend-title" id="legend-label">Sicaklik Skalasi</div>
+        <div class="legend-bar" id="legend-bar"></div>
         <div class="legend-labels">
-            <span id="legend-min">-10 C</span>
-            <span>10 C</span>
-            <span>25 C</span>
-            <span id="legend-max">40 C</span>
+            <span id="legend-min">0</span>
+            <span id="legend-mid">50</span>
+            <span id="legend-max">100</span>
         </div>
     </div>
 
     <div class="loading-overlay" id="loading">
         <div class="spinner"></div>
-        <div class="loading-text">Uydu verileri analiz ediliyor...</div>
+        <div class="loading-text">Veriler isleniyor...</div>
     </div>
 </div>
 
 <div id="map"></div>
 
+<div class="subsurface-panel" id="subsurface-panel">
+    <div class="subsurface-title">&#127793; Yeralti Kesit Goruntusu</div>
+    <div class="subsurface-layers">
+        <button class="sub-layer-btn active" onclick="setSubLayer(this,0)">Toprak</button>
+        <button class="sub-layer-btn" onclick="setSubLayer(this,1)">Kaya</button>
+        <button class="sub-layer-btn" onclick="setSubLayer(this,2)">Yeralti Suyu</button>
+        <button class="sub-layer-btn" onclick="setSubLayer(this,3)">Isi Kaynagi</button>
+        <button class="sub-layer-btn" onclick="setSubLayer(this,4)">Sediment</button>
+    </div>
+    <div class="depth-indicator">
+        <span class="depth-label" id="depth-val">Yuzey</span>
+        <input type="range" class="depth-slider" id="depth-slider" min="0" max="4" value="0" oninput="changeDepth(this.value)">
+        <span class="depth-label" style="text-align:right" id="depth-max">1000m</span>
+    </div>
+    <canvas id="sub-canvas" style="width:100%;height:120px;border-radius:8px;margin-top:8px;background:#0a0c14"></canvas>
+</div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-var map, currentMode='click', cornerPoints=[], cornerMarkers=[], tempLayer=null, rectDraw=null, rectStart=null, thermalOverlay=null;
+var map,currentMode='click',cornerPoints=[],cornerMarkers=[],rectDraw=null,rectStart=null;
+var activeOverlays={},currentBaseLayer='dark',baseLayers={};
+var lastAreaBounds=null,currentDepth=0;
+var depthRanges=['Yuzey','0-50m','50-200m','200-500m','500-1000m'];
 
 function initMap(){
     map=L.map('map',{center:[39.9,32.8],zoom:6,zoomControl:false,attributionControl:false});
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(map);
+    baseLayers.dark=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19});
+    baseLayers.satellite=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:18});
+    baseLayers.topo=L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{maxZoom:17});
+    baseLayers.terrain=L.tileLayer('https://stamen-tiles.a.ssl.fastly.net/terrain/{z}/{x}/{y}.jpg',{maxZoom:18});
+    baseLayers.dark.addTo(map);
     L.control.zoom({position:'topright'}).addTo(map);
-
     map.on('click',function(e){
         if(currentMode==='click')analyzePoint(e.latlng.lat,e.latlng.lng);
         else if(currentMode==='corner')addCornerPoint(e.latlng.lat,e.latlng.lng);
+        else if(currentMode==='sub')showSubsurface(e.latlng.lat,e.latlng.lng);
     });
     map.on('mousedown',function(e){if(currentMode==='rect'){rectStart=e.latlng;if(rectDraw)map.removeLayer(rectDraw);}});
     map.on('mouseup',function(e){
@@ -155,17 +215,28 @@ function initMap(){
             rectStart=null;
         }
     });
+    drawSubsurface(39.9,32.8);
+}
+
+function setBaseLayer(name){
+    if(baseLayers[currentBaseLayer])map.removeLayer(baseLayers[currentBaseLayer]);
+    baseLayers[name].addTo(map);
+    currentBaseLayer=name;
+    document.querySelectorAll('.layer-group:first-child .layer-btn').forEach(function(b){b.classList.remove('active')});
+    document.getElementById('base-'+name).classList.add('active');
 }
 
 function setMode(mode){
     currentMode=mode;
-    document.querySelectorAll('.mode-btn').forEach(function(b){b.classList.remove('active')});
+    document.querySelectorAll('.mode-toggle .mode-btn').forEach(function(b){b.classList.remove('active')});
     document.getElementById('mode-'+mode).classList.add('active');
     document.getElementById('corner-hint').classList.toggle('show',mode==='corner');
+    document.getElementById('subsurface-panel').classList.toggle('show',mode==='sub');
     if(mode==='corner'){clearCornerPoints();document.getElementById('status-text').textContent='4 kose secin: Sol ust';}
     else{clearCornerPoints();}
     if(mode==='click')document.getElementById('status-text').textContent='Haritada bir nokta secin';
     if(mode==='rect')document.getElementById('status-text').textContent='Surukleyerek alan secin';
+    if(mode==='sub')document.getElementById('status-text').textContent='Yeralti icin bir nokta tiklayin';
 }
 
 function clearCornerPoints(){
@@ -179,20 +250,16 @@ function addCornerPoint(lat,lng){
     var num=cornerPoints.length+1;
     var colors=['#00d4ff','#ff6b6b','#22c55e','#ffd93d'];
     var marker=L.circleMarker([lat,lng],{radius:8,color:colors[num-1],fillColor:colors[num-1],fillOpacity:0.9,weight:2}).addTo(map);
-    marker.bindTooltip('Kose '+num,{permanent:true,direction:'top',offset:[0,-10],className:'corner-tooltip'}).openTooltip();
     cornerMarkers.push(marker);
     cornerPoints.push({lat:lat,lng:lng});
     var el=document.getElementById('step-'+num);if(el)el.classList.add('done');
-    var labels=['Sol ust','Sag ust','Sol alt','Sag alt'];
-    if(num<4)document.getElementById('status-text').textContent='Kose '+num+'/4 tamam - Siradaki: '+labels[num];
+    if(num<4)document.getElementById('status-text').textContent='Kose '+num+'/4 tamam';
     if(num===4){
-        document.getElementById('status-text').textContent='4 kose secildi, analiz baslatiliyor...';
         var lats=cornerPoints.map(function(p){return p.lat});
         var lngs=cornerPoints.map(function(p){return p.lng});
         var north=Math.max.apply(null,lats),south=Math.min.apply(null,lats);
         var east=Math.max.apply(null,lngs),west=Math.min.apply(null,lngs);
-        var bounds=L.latLngBounds([south,west],[north,east]);
-        rectDraw=L.rectangle(bounds,{color:'#00d4ff',weight:2,fillColor:'#00d4ff',fillOpacity:0.1,dashArray:'8,4'}).addTo(map);
+        rectDraw=L.rectangle(L.latLngBounds([south,west],[north,east]),{color:'#00d4ff',weight:2,fillColor:'#00d4ff',fillOpacity:0.1,dashArray:'8,4'}).addTo(map);
         analyzeArea(north,west,south,east);
         clearCornerPoints();
     }
@@ -212,147 +279,180 @@ async function analyzePoint(lat,lng){
 
 async function analyzeArea(north,west,south,east){
     showLoading(true);
+    lastAreaBounds={north:north,west:west,south:south,east:east};
     try{
         var tempRes=await fetch('/api/analyze-temperature',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({north:north,south:south,east:east,west:west})});
         var gridRes=await fetch('/api/thermal-grid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({north:north,south:south,east:east,west:west})});
         var tempData=await tempRes.json();
         var gridData=await gridRes.json();
         addReport(tempData);
-        renderSmoothThermal(gridData);
-        showToast('Termal harita olusturuldu - '+tempData.region);
+        showToast('Analiz tamamlandi - '+tempData.region);
     }catch(err){showToast('Hata: Backend baglantisi kurulamadi');}
     showLoading(false);
 }
 
-function tempToColor(temp,minT,maxT){
-    var t=Math.max(0,Math.min(1,(temp-minT)/(maxT-minT)));
-    var stops=[
-        [0,0x00,0x44,0xff],[0.12,0x00,0xaa,0xff],[0.25,0x00,0xe5,0xc8],
-        [0.37,0x66,0xff,0x66],[0.5,0xcc,0xff,0x00],[0.62,0xff,0xcc,0x00],
-        [0.75,0xff,0x88,0x00],[0.87,0xff,0x44,0x00],[1.0,0xcc,0x00,0x00]
-    ];
-    var i=0;
-    while(i<stops.length-1&&stops[i+1][0]<t)i++;
-    if(i>=stops.length-1)return'rgb('+stops[stops.length-1][1]+','+stops[stops.length-1][2]+','+stops[stops.length-1][3]+')';
-    var f=(t-stops[i][0])/(stops[i+1][0]-stops[i][0]);
-    f=f*f*(3-2*f);
-    var r=Math.round(stops[i][1]+(stops[i+1][1]-stops[i][1])*f);
-    var g=Math.round(stops[i][2]+(stops[i+1][2]-stops[i][2])*f);
-    var b=Math.round(stops[i][3]+(stops[i+1][3]-stops[i][3])*f);
-    return'rgb('+r+','+g+','+b+')';
+function toggleOverlay(type){
+    var btn=document.getElementById('overlay-'+type);
+    if(activeOverlays[type]){map.removeLayer(activeOverlays[type]);delete activeOverlays[type];btn.classList.remove('active');if(type==='thermal')document.getElementById('color-legend').style.display='none';return;}
+    btn.classList.add('active');
+    if(!lastAreaBounds){showToast('Once bir alan secin');btn.classList.remove('active');return;}
+    var b=lastAreaBounds;
+    if(type==='thermal'){
+        fetch('/api/thermal-grid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){return r.json()}).then(function(d){renderCanvasOverlay(d,'thermal')});
+    }else{
+        var gs=30,grid=[];
+        for(var i=0;i<gs;i++)for(var j=0;j<gs;j++){
+            var lat=b.south+(b.north-b.south)*i/(gs-1),lng=b.west+(b.east-b.west)*j/(gs-1);
+            var v=0;
+            if(type==='ndvi')v=0.3+0.5*Math.sin(lat*0.1)*Math.cos(lng*0.15)+0.2*Math.random();
+            else if(type==='moisture')v=0.2+0.4*Math.cos(lat*0.08)*Math.sin(lng*0.12)+0.15*Math.random();
+            else if(type==='topsoil')v=Math.sin(lat*0.2+lng*0.1)*0.5+0.5;
+            else if(type==='sub')v=0.2+0.6*(1-Math.abs(Math.sin(lat*0.05+lng*0.03)))+0.2*Math.random();
+            grid.push(Math.max(0,Math.min(1,v)));
+        }
+        renderCanvasOverlay({bounds:b,grid_size:gs,grid:grid,min_temp:0,max_temp:1},type);
+    }
 }
 
 function bilinearInterpolate(grid,gs,x,y){
-    var x0=Math.floor(x),x1=Math.min(x0+1,gs-1);
-    var y0=Math.floor(y),y1=Math.min(y0+1,gs-1);
+    var x0=Math.floor(x),x1=Math.min(x0+1,gs-1),y0=Math.floor(y),y1=Math.min(y0+1,gs-1);
     var fx=x-x0,fy=y-y0;
-    var v00=grid[y0*gs+x0],v10=grid[y0*gs+x1];
-    var v01=grid[y1*gs+x0],v11=grid[y1*gs+x1];
-    var top=v00+(v10-v00)*fx;
-    var bot=v01+(v11-v01)*fx;
-    return top+(bot-top)*fy;
+    return(grid[y0*gs+x0]*(1-fx)+grid[y0*gs+x1]*fx)*(1-fy)+(grid[y1*gs+x0]*(1-fx)+grid[y1*gs+x1]*fx)*fy;
 }
 
-function renderSmoothThermal(data){
-    if(thermalOverlay){map.removeLayer(thermalOverlay);thermalOverlay=null;}
-    if(tempLayer){map.removeLayer(tempLayer);tempLayer=null;}
+function getColor(t,type){
+    if(type==='thermal'){
+        var s=[[0,0,68,255],[.12,0,170,255],[.25,0,229,200],[.37,102,255,102],[.5,204,255,0],[.62,255,204,0],[.75,255,136,0],[.87,255,68,0],[1,204,0,0]];
+        var i=0;while(i<s.length-1&&s[i+1][0]<t)i++;if(i>=s.length-1)i=s.length-2;
+        var f=(t-s[i][0])/(s[i+1][0]-s[i][0]);f=f*f*(3-2*f);
+        return[Math.round(s[i][1]+(s[i+1][1]-s[i][1])*f),Math.round(s[i][2]+(s[i+1][2]-s[i][2])*f),Math.round(s[i][3]+(s[i+1][3]-s[i][3])*f)];
+    }
+    if(type==='ndvi')return[Math.round(80-t*80),Math.round(40+t*215),Math.round(20+t*30)];
+    if(type==='moisture')return[Math.round(20+t*20),Math.round(60+t*100),Math.round(100+t*155)];
+    if(type==='topsoil')return[Math.round(60+t*140),Math.round(30+t*80),Math.round(10+t*20)];
+    if(type==='sub')return[Math.round(255-t*200),Math.round(100-t*60),Math.round(20+t*40)];
+    return[128,128,128];
+}
 
-    var b=data.bounds,gs=data.grid_size,grid=data.grid;
-    var minT=data.min_temp,maxT=data.max_temp;
-
-    document.getElementById('legend-min').textContent=minT+' C';
-    document.getElementById('legend-max').textContent=maxT+' C';
+function renderCanvasOverlay(data,type){
+    if(activeOverlays[type]){map.removeLayer(activeOverlays[type]);delete activeOverlays[type];}
+    var b=data.bounds,gs=data.grid_size,grid=data.grid,minT=data.min_temp,maxT=data.max_temp;
+    var labels={thermal:['Sicaklik Skalasi','linear-gradient(90deg,#0044ff,#00aaff,#00e5c8,#66ff66,#ccff00,#ffcc00,#ff8800,#ff4400,#cc0000)',minT.toFixed(0)+' C',((minT+maxT)/2).toFixed(0)+' C',maxT.toFixed(0)+' C'],
+        ndvi:['Bitki Orani (NDVI)','linear-gradient(90deg,#502814,#20b032)','Cok Dusuk','Orta','Yuksek'],
+        moisture:['Nem / Su Orani','linear-gradient(90deg,#143c64,#00c8ff)','Kuru','Orta','Islak'],
+        topsoil:['Toprak Turu','linear-gradient(90deg,#3c1e0a,#c85014)','Killi','Torbali','Humus'],
+        sub:['Yeralti Isi','linear-gradient(90deg,#ff6414,#382800)','Dusuk','Orta','Yuksek']};
+    var lb=labels[type];
+    document.getElementById('legend-label').textContent=lb[0];
+    document.getElementById('legend-bar').style.background=lb[1];
+    document.getElementById('legend-min').textContent=lb[2];
+    document.getElementById('legend-mid').textContent=lb[3];
+    document.getElementById('legend-max').textContent=lb[4];
     document.getElementById('color-legend').style.display='block';
 
     var CanvasLayer=L.Layer.extend({
         onAdd:function(map){
-            this._map=map;
-            var pane=this.getPane();
+            this._map=map;var pane=this.getPane();
             this._canvas=document.createElement('canvas');
-            this._canvas.style.position='absolute';
-            this._canvas.style.pointerEvents='none';
-            this._canvas.style.opacity='0.6';
+            this._canvas.style.cssText='position:absolute;pointer-events:none;opacity:0.6';
             pane.appendChild(this._canvas);
-            this._tooltip=document.createElement('div');
-            this._tooltip.style.cssText='position:absolute;display:none;background:rgba(15,17,23,0.9);border:1px solid #00d4ff;color:#e0e0e0;padding:4px 8px;border-radius:6px;font-size:12px;font-family:Inter,sans-serif;pointer-events:none;z-index:9999;white-space:nowrap;';
-            pane.appendChild(this._tooltip);
+            this._tip=document.createElement('div');
+            this._tip.style.cssText='position:absolute;display:none;background:rgba(15,17,23,0.9);border:1px solid #00d4ff;color:#e0e0e0;padding:4px 8px;border-radius:6px;font-size:11px;font-family:Inter,sans-serif;pointer-events:none;z-index:9999;white-space:nowrap;';
+            pane.appendChild(this._tip);
             this._draw();
             map.on('moveend zoomend',this._draw,this);
-            map.on('mousemove',this._onMouseMove,this);
+            map.on('mousemove',this._onMM,this);
         },
         onRemove:function(map){
-            map.off('moveend zoomend',this._draw,this);
-            map.off('mousemove',this._onMouseMove,this);
+            map.off('moveend zoomend',this._draw,this);map.off('mousemove',this._onMM,this);
             if(this._canvas.parentNode)this._canvas.parentNode.removeChild(this._canvas);
-            if(this._tooltip.parentNode)this._tooltip.parentNode.removeChild(this._tooltip);
+            if(this._tip.parentNode)this._tip.parentNode.removeChild(this._tip);
         },
-        _onMouseMove:function(e){
+        _onMM:function(e){
             var lat=e.latlng.lat,lng=e.latlng.lng;
-            if(lat<b.south||lat>b.north||lng<b.west||lng>b.east){
-                this._tooltip.style.display='none';
-                return;
-            }
-            var gx=(lng-b.west)/(b.east-b.west)*(gs-1);
-            var gy=(lat-b.south)/(b.north-b.south)*(gs-1);
-            var temp=bilinearInterpolate(grid,gs,gx,gy);
-            temp=Math.round(temp*10)/10;
-            var px=e.originalEvent.clientX-this.getPane().getBoundingClientRect().left+15;
-            var py=e.originalEvent.clientY-this.getPane().getBoundingClientRect().top-10;
-            this._tooltip.innerHTML='<b>'+temp+'</b> C';
-            this._tooltip.style.left=px+'px';
-            this._tooltip.style.top=py+'px';
-            this._tooltip.style.display='block';
+            if(lat<b.south||lat>b.north||lng<b.west||lng>b.east){this._tip.style.display='none';return;}
+            var gx=(lng-b.west)/(b.east-b.west)*(gs-1),gy=(lat-b.south)/(b.north-b.south)*(gs-1);
+            var val=bilinearInterpolate(grid,gs,gx,gy);
+            var info='';
+            if(type==='thermal')info=Math.round(minT+val*(maxT-minT)*10)/10+' C';
+            else if(type==='ndvi')info='NDVI: '+val.toFixed(2);
+            else if(type==='moisture')info='Nem: %'+Math.round(val*100);
+            else if(type==='topsoil')info=['Killi','Kumlu','Torbali','Humus'][Math.min(3,Math.floor(val*4))];
+            else if(type==='sub')info='Isi: %'+Math.round(val*100);
+            var px=e.originalEvent.clientX-map.getContainer().getBoundingClientRect().left+15;
+            var py=e.originalEvent.clientY-map.getContainer().getBoundingClientRect().top-10;
+            this._tip.innerHTML='<b>'+info+'</b>';this._tip.style.left=px+'px';this._tip.style.top=py+'px';this._tip.style.display='block';
         },
         _draw:function(){
             if(!this._map)return;
-            var map=this._map;
-            var nw=map.latLngToContainerPoint(L.latLng(b.north,b.west));
-            var se=map.latLngToContainerPoint(L.latLng(b.south,b.east));
-            var w=Math.abs(se.x-nw.x);
-            var h=Math.abs(se.y-nw.y);
-            if(w<2||h<2)return;
-
-            var renderW=Math.max(w,200);
-            var renderH=Math.max(h,200);
-            this._canvas.width=renderW;
-            this._canvas.height=renderH;
-            this._canvas.style.width=w+'px';
-            this._canvas.style.height=h+'px';
-            this._canvas.style.left=Math.min(nw.x,se.x)+'px';
-            this._canvas.style.top=Math.min(nw.y,se.y)+'px';
-
-            var ctx=this._canvas.getContext('2d');
-            var imgData=ctx.createImageData(renderW,renderH);
-
-            for(var py=0;py<renderH;py++){
-                for(var px=0;px<renderW;px++){
-                    var gx=(px/renderW)*(gs-1);
-                    var gy=(1-py/renderH)*(gs-1);
-                    var temp=bilinearInterpolate(grid,gs,gx,gy);
-                    var t=Math.max(0,Math.min(1,(temp-minT)/(maxT-minT)));
-                    var stops=[
-                        [0,0,0x44,0xff],[0.12,0,0xaa,0xff],[0.25,0,0xe5,0xc8],
-                        [0.37,0x66,0xff,0x66],[0.5,0xcc,0xff,0],[0.62,0xff,0xcc,0],
-                        [0.75,0xff,0x88,0],[0.87,0xff,0x44,0],[1.0,0xcc,0,0]
-                    ];
-                    var si=0;
-                    while(si<stops.length-1&&stops[si+1][0]<t)si++;
-                    if(si>=stops.length-1)si=stops.length-2;
-                    var f=(t-stops[si][0])/(stops[si+1][0]-stops[si][0]);
-                    f=f*f*(3-2*f);
-                    var idx=(py*renderW+px)*4;
-                    imgData.data[idx]=Math.round(stops[si][1]+(stops[si+1][1]-stops[si][1])*f);
-                    imgData.data[idx+1]=Math.round(stops[si][2]+(stops[si+1][2]-stops[si][2])*f);
-                    imgData.data[idx+2]=Math.round(stops[si][3]+(stops[si+1][3]-stops[si][3])*f);
-                    imgData.data[idx+3]=200;
-                }
+            var nw=this._map.latLngToContainerPoint(L.latLng(b.north,b.west));
+            var se=this._map.latLngToContainerPoint(L.latLng(b.south,b.east));
+            var w=Math.abs(se.x-nw.x),h=Math.abs(se.y-nw.y);if(w<2||h<2)return;
+            var rw=Math.max(w,200),rh=Math.max(h,200);
+            this._canvas.width=rw;this._canvas.height=rh;
+            this._canvas.style.width=w+'px';this._canvas.style.height=h+'px';
+            this._canvas.style.left=Math.min(nw.x,se.x)+'px';this._canvas.style.top=Math.min(nw.y,se.y)+'px';
+            var ctx=this._canvas.getContext('2d'),img=ctx.createImageData(rw,rh);
+            for(var py=0;py<rh;py++)for(var px=0;px<rw;px++){
+                var gx=(px/rw)*(gs-1),gy=(1-py/rh)*(gs-1);
+                var val=bilinearInterpolate(grid,gs,gx,gy);
+                var rgb=getColor(val,type);
+                var idx=(py*rw+px)*4;img.data[idx]=rgb[0];img.data[idx+1]=rgb[1];img.data[idx+2]=rgb[2];img.data[idx+3]=200;
             }
-            ctx.putImageData(imgData,0,0);
+            ctx.putImageData(img,0,0);
         }
     });
+    activeOverlays[type]=new CanvasLayer();activeOverlays[type].addTo(map);
+}
 
-    thermalOverlay=new CanvasLayer();
-    thermalOverlay.addTo(map);
+function showSubsurface(lat,lng){
+    document.getElementById('subsurface-panel').classList.add('show');
+    drawSubsurface(lat,lng);
+}
+
+function drawSubsurface(lat,lng){
+    var canvas=document.getElementById('sub-canvas');
+    canvas.width=420;canvas.height=120;
+    var ctx=canvas.getContext('2d');
+    var layers=[
+        {name:'Bitki Orani',color:'#2d5a27',h:18},
+        {name:'Toprak Tabakasi',color:'#8B4513',h:22},
+        {name:'Sediment',color:'#a0906a',h:22},
+        {name:'Kaya Tabakasi',color:'#696969',h:28},
+        {name:'Magma / Isi',color:'#cc3300',h:30}
+    ];
+    var subtypes=['Killi Toprak','Granit Kaya','Akifer','Volkanik','Kil+Silex'];
+    var y=0,heatScale=currentDepth/4;
+    layers.forEach(function(l,i){
+        var grad=ctx.createLinearGradient(0,y,0,y+l.h);
+        grad.addColorStop(0,l.color);
+        var c=l.color.replace('#','');
+        var r=parseInt(c.substr(0,2),16),g=parseInt(c.substr(2,2),16),b=parseInt(c.substr(4,2),16);
+        r=Math.min(255,r+Math.round(heatScale*80*(i/4)));
+        grad.addColorStop(1,'rgb('+r+','+Math.max(0,g-Math.round(heatScale*30))+','+Math.max(0,b-Math.round(heatScale*40))+')');
+        ctx.fillStyle=grad;ctx.fillRect(0,y,420,l.h);
+        ctx.fillStyle='rgba(255,255,255,0.8)';ctx.font='10px Inter';
+        ctx.fillText(l.name+': '+subtypes[i],8,y+l.h/2+4);
+        y+=l.h;
+    });
+    var tempBase=12+heatScale*35;
+    ctx.fillStyle='rgba(0,212,255,0.9)';ctx.font='bold 11px Inter';
+    ctx.fillText('Derinlik: '+depthRanges[currentDepth]+' | Sicaklik: ~'+tempBase.toFixed(0)+' C',8,115);
+}
+
+function setSubLayer(el,idx){
+    document.querySelectorAll('.sub-layer-btn').forEach(function(b){b.classList.remove('active')});
+    el.classList.add('active');
+    currentDepth=idx;
+    document.getElementById('depth-slider').value=idx;
+    document.getElementById('depth-val').textContent=depthRanges[idx];
+    drawSubsurface(39.9,32.8);
+}
+
+function changeDepth(val){
+    currentDepth=parseInt(val);
+    document.getElementById('depth-val').textContent=depthRanges[currentDepth];
+    drawSubsurface(39.9,32.8);
 }
 
 function addReport(data){
@@ -360,25 +460,20 @@ function addReport(data){
     var container=document.getElementById('reports');
     var temps=data.monthly_data.map(function(d){return d.sicaklik});
     var avg=(temps.reduce(function(a,b){return a+b},0)/temps.length).toFixed(1);
-    var max=Math.max.apply(null,temps).toFixed(1);
-    var min=Math.min.apply(null,temps).toFixed(1);
-    var getTempClass=function(t){if(t>=30)return'hot';if(t>=20)return'warm';if(t>=10)return'mild';if(t>=0)return'cool';return'cold';};
-    var getBarWidth=function(t){return Math.min(100,Math.max(5,((t+10)/50)*100));};
-    var monthlyHTML=data.monthly_data.map(function(d){
-        return '<li><span class="month">'+d.ay+'</span><span style="display:flex;align-items:center;"><span class="temp" style="color:'+(d.sicaklik>=25?'#ff6b6b':d.sicaklik>=10?'#ffd93d':'#00d4ff')+'">'+d.sicaklik+' C</span><span class="temp-bar"><span class="temp-bar-fill '+getTempClass(d.sicaklik)+'" style="width:'+getBarWidth(d.sicaklik)+'%"></span></span></span></li>';
+    var max=Math.max.apply(null,temps).toFixed(1),min=Math.min.apply(null,temps).toFixed(1);
+    var gtc=function(t){if(t>=30)return'hot';if(t>=20)return'warm';if(t>=10)return'mild';if(t>=0)return'cool';return'cold';};
+    var gbw=function(t){return Math.min(100,Math.max(5,((t+10)/50)*100));};
+    var mHTML=data.monthly_data.map(function(d){
+        return'<li><span class="month">'+d.ay+'</span><span style="display:flex;align-items:center;"><span class="temp" style="color:'+(d.sicaklik>=25?'#ff6b6b':d.sicaklik>=10?'#ffd93d':'#00d4ff')+'">'+d.sicaklik+' C</span><span class="temp-bar"><span class="temp-bar-fill '+gtc(d.sicaklik)+'" style="width:'+gbw(d.sicaklik)+'%"></span></span></span></li>';
     }).join('');
-    var card=document.createElement('div');
-    card.className='report-card';
-    card.innerHTML='<h4>'+data.region+'</h4><div class="coords">'+data.bounds.north.toFixed(4)+'N, '+data.bounds.east.toFixed(4)+'E</div><div class="summary"><div class="summary-item"><div class="label">Ortalama</div><div class="value">'+avg+'</div></div><div class="summary-item"><div class="label">En Sicak</div><div class="value hot">'+max+'</div></div><div class="summary-item"><div class="label">En soguk</div><div class="value cold">'+min+'</div></div><div class="summary-item"><div class="label">Fark</div><div class="value">'+(max-min).toFixed(1)+'</div></div></div><ul class="monthly-list">'+monthlyHTML+'</ul>';
+    var card=document.createElement('div');card.className='report-card';
+    card.innerHTML='<h4>'+data.region+'</h4><div class="coords">'+data.bounds.north.toFixed(4)+'N, '+data.bounds.east.toFixed(4)+'E</div><div class="summary"><div class="summary-item"><div class="label">Ortalama</div><div class="value">'+avg+'</div></div><div class="summary-item"><div class="label">En Sicak</div><div class="value hot">'+max+'</div></div><div class="summary-item"><div class="label">En soguk</div><div class="value cold">'+min+'</div></div><div class="summary-item"><div class="label">Fark</div><div class="value">'+(max-min).toFixed(1)+'</div></div></div><ul class="monthly-list">'+mHTML+'</ul>';
     container.insertBefore(card,container.firstChild);
     document.getElementById('status-text').textContent='Analiz tamamlandi - '+data.region;
 }
 
-function showLoading(show){document.getElementById('loading').classList.toggle('show',show);}
-function showToast(msg){
-    var toast=document.createElement('div');toast.className='toast';toast.textContent=msg;
-    document.body.appendChild(toast);setTimeout(function(){toast.remove()},3000);
-}
+function showLoading(s){document.getElementById('loading').classList.toggle('show',s);}
+function showToast(m){var t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(function(){t.remove()},3000);}
 
 initMap();
 </script>
