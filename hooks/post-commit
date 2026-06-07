@@ -1,0 +1,3 @@
+#!/bin/sh
+cd "D:/Ahmet Proje Dosyaları/haritaanaliz"
+"C:/Program Files/Git/cmd/git.exe" push origin main
