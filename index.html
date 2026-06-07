@@ -9,61 +9,66 @@
     <style>
         *{margin:0;padding:0;box-sizing:border-box}
         body{font-family:'Inter',sans-serif;background:#0f1117;color:#e0e0e0;overflow:hidden;height:100vh}
-        #map{position:absolute;top:0;left:380px;right:0;bottom:0;z-index:1}
-        #sidebar{position:absolute;top:0;left:0;width:380px;height:100vh;background:linear-gradient(180deg,#12141d 0%,#181b27 100%);border-right:1px solid #2a2d3a;z-index:1000;display:flex;flex-direction:column}
-        .sidebar-header{padding:20px 16px 12px;border-bottom:1px solid #2a2d3a;flex-shrink:0}
-        .logo{display:flex;align-items:center;gap:10px;margin-bottom:4px}
-        .logo-icon{width:34px;height:34px;background:linear-gradient(135deg,#00d4ff,#0090ff);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px}
-        .logo-text{font-size:18px;font-weight:700;background:linear-gradient(135deg,#00d4ff,#0090ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-        .subtitle{font-size:11px;color:#6b7280;margin-left:44px;margin-top:-2px}
-        .controls{padding:12px 16px;border-bottom:1px solid #2a2d3a;flex-shrink:0}
-        .mode-toggle{display:flex;background:#1e2030;border-radius:10px;padding:3px;gap:3px}
-        .mode-btn{flex:1;padding:8px 6px;border:none;border-radius:8px;background:transparent;color:#6b7280;font-size:10px;font-weight:500;cursor:pointer;transition:all 0.2s;font-family:'Inter',sans-serif}
-        .mode-btn.active{background:linear-gradient(135deg,#00d4ff,#0090ff);color:#fff;box-shadow:0 2px 10px rgba(0,180,255,0.3)}
+        #map{position:absolute;top:0;left:360px;right:0;bottom:0;z-index:1}
+        #sidebar{position:absolute;top:0;left:0;width:360px;height:100vh;background:linear-gradient(180deg,#12141d 0%,#181b27 100%);border-right:1px solid #2a2d3a;z-index:1000;display:flex;flex-direction:column}
+        .sidebar-header{padding:16px 14px 10px;border-bottom:1px solid #2a2d3a;flex-shrink:0}
+        .logo{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+        .logo-icon{width:30px;height:30px;background:linear-gradient(135deg,#00d4ff,#0090ff);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px}
+        .logo-text{font-size:16px;font-weight:700;background:linear-gradient(135deg,#00d4ff,#0090ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .subtitle{font-size:10px;color:#6b7280;margin-left:38px;margin-top:-2px}
+        .controls{padding:10px 14px;border-bottom:1px solid #2a2d3a;flex-shrink:0}
+        .mode-toggle{display:flex;background:#1e2030;border-radius:8px;padding:2px;gap:2px}
+        .mode-btn{flex:1;padding:7px 4px;border:none;border-radius:6px;background:transparent;color:#6b7280;font-size:9px;font-weight:500;cursor:pointer;transition:all 0.2s;font-family:'Inter',sans-serif}
+        .mode-btn.active{background:linear-gradient(135deg,#00d4ff,#0090ff);color:#fff;box-shadow:0 2px 8px rgba(0,180,255,0.3)}
         .mode-btn:hover:not(.active){color:#e0e0e0;background:#2a2d3a}
-        .corner-hint{padding:8px 12px;background:#1a1d2e;border-radius:8px;margin-top:8px;font-size:10px;color:#9ca3af;display:none;border:1px solid #2a2d3a}
+        .corner-hint{padding:6px 10px;background:#1a1d2e;border-radius:6px;margin-top:6px;font-size:9px;color:#9ca3af;display:none;border:1px solid #2a2d3a}
         .corner-hint.show{display:block}
-        .corner-hint .step{display:inline-block;width:16px;height:16px;background:#00d4ff;color:#0f1117;border-radius:50%;text-align:center;line-height:16px;font-size:9px;font-weight:700;margin-right:4px}
+        .corner-hint .step{display:inline-block;width:14px;height:14px;background:#00d4ff;color:#0f1117;border-radius:50%;text-align:center;line-height:14px;font-size:8px;font-weight:700;margin-right:3px}
         .corner-hint .step.done{background:#22c55e}
-        .info-bar{padding:10px 16px;display:flex;align-items:center;gap:8px;font-size:11px;color:#6b7280;border-bottom:1px solid #2a2d3a;flex-shrink:0}
-        .info-bar .dot{width:6px;height:6px;background:#00d4ff;border-radius:50%;animation:pulse 2s infinite}
+        .info-bar{padding:8px 14px;display:flex;align-items:center;gap:6px;font-size:10px;color:#6b7280;border-bottom:1px solid #2a2d3a;flex-shrink:0}
+        .info-bar .dot{width:5px;height:5px;background:#00d4ff;border-radius:50%;animation:pulse 2s infinite}
         @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 
         .sidebar-scroll{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding-bottom:8px}
-        .sidebar-scroll::-webkit-scrollbar{width:4px}
+        .sidebar-scroll::-webkit-scrollbar{width:3px}
         .sidebar-scroll::-webkit-scrollbar-track{background:transparent}
         .sidebar-scroll::-webkit-scrollbar-thumb{background:#2a2d3a;border-radius:2px}
 
-        .layers-section{padding:12px 16px;border-bottom:1px solid #2a2d3a}
-        .layers-title{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
-        .layer-group{margin-bottom:8px}
-        .layer-group-label{font-size:10px;color:#9ca3af;font-weight:600;margin-bottom:4px}
-        .layer-btn{display:flex;align-items:center;gap:6px;width:100%;padding:6px 8px;border:1px solid #2a2d3a;border-radius:6px;background:#1e2030;color:#6b7280;font-size:10px;cursor:pointer;transition:all 0.2s;margin-bottom:3px;font-family:'Inter',sans-serif}
+        .layers-section{padding:10px 14px;border-bottom:1px solid #2a2d3a}
+        .layers-title{font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+        .layer-group{margin-bottom:6px}
+        .layer-group-label{font-size:9px;color:#9ca3af;font-weight:600;margin-bottom:3px}
+        .layer-btn{display:flex;align-items:center;gap:5px;width:100%;padding:5px 7px;border:1px solid #2a2d3a;border-radius:5px;background:#1e2030;color:#6b7280;font-size:9px;cursor:pointer;transition:all 0.2s;margin-bottom:2px;font-family:'Inter',sans-serif}
         .layer-btn:hover{border-color:#00d4ff;color:#e0e0e0}
         .layer-btn.active{border-color:#00d4ff;background:rgba(0,212,255,0.1);color:#00d4ff}
-        .layer-btn .ldot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+        .layer-btn .ldot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+        .opacity-row{display:flex;align-items:center;gap:6px;padding:4px 7px;margin-top:2px;display:none}
+        .opacity-row.show{display:flex}
+        .opacity-row label{font-size:9px;color:#6b7280;white-space:nowrap}
+        .opacity-slider{flex:1;-webkit-appearance:none;height:3px;border-radius:2px;background:#2a2d3a;outline:none}
+        .opacity-slider::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;border-radius:50%;background:#00d4ff;cursor:pointer}
 
-        .reports-container{padding:12px 16px}
-        .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:120px;text-align:center;padding:16px}
-        .empty-state .icon{font-size:36px;margin-bottom:12px;opacity:0.3}
-        .empty-state h3{font-size:14px;font-weight:600;color:#9ca3af;margin-bottom:6px}
-        .empty-state p{font-size:12px;color:#4b5563;line-height:1.4}
-        .report-card{background:#1e2030;border:1px solid #2a2d3a;border-radius:10px;padding:14px;margin-bottom:10px;animation:slideIn 0.3s ease}
-        @keyframes slideIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-        .report-card h4{font-size:12px;font-weight:600;color:#00d4ff;margin-bottom:3px}
-        .report-card .coords{font-size:10px;color:#6b7280;margin-bottom:10px;font-family:monospace}
-        .report-card .summary{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px}
-        .summary-item{background:#12141d;border-radius:6px;padding:8px;text-align:center}
-        .summary-item .label{font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px}
-        .summary-item .value{font-size:16px;font-weight:700;color:#e0e0e0}
+        .reports-container{padding:10px 14px}
+        .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100px;text-align:center;padding:12px}
+        .empty-state .icon{font-size:30px;margin-bottom:8px;opacity:0.3}
+        .empty-state h3{font-size:12px;font-weight:600;color:#9ca3af;margin-bottom:4px}
+        .empty-state p{font-size:10px;color:#4b5563;line-height:1.3}
+        .report-card{background:#1e2030;border:1px solid #2a2d3a;border-radius:8px;padding:10px;margin-bottom:8px;animation:slideIn 0.3s ease}
+        @keyframes slideIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        .report-card h4{font-size:11px;font-weight:600;color:#00d4ff;margin-bottom:2px}
+        .report-card .coords{font-size:9px;color:#6b7280;margin-bottom:6px;font-family:monospace}
+        .report-card .summary{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:8px}
+        .summary-item{background:#12141d;border-radius:5px;padding:6px;text-align:center}
+        .summary-item .label{font-size:8px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px}
+        .summary-item .value{font-size:14px;font-weight:700;color:#e0e0e0}
         .summary-item .value.hot{color:#ff6b6b}
         .summary-item .value.cold{color:#00d4ff}
         .monthly-list{list-style:none}
-        .monthly-list li{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #2a2d3a;font-size:11px}
+        .monthly-list li{display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid #2a2d3a;font-size:10px}
         .monthly-list li:last-child{border-bottom:none}
         .monthly-list .month{color:#9ca3af}
         .monthly-list .temp{font-weight:600;font-family:monospace}
-        .temp-bar{width:50px;height:3px;background:#2a2d3a;border-radius:2px;margin-left:8px;overflow:hidden}
+        .temp-bar{width:40px;height:3px;background:#2a2d3a;border-radius:2px;margin-left:6px;overflow:hidden}
         .temp-bar-fill{height:100%;border-radius:2px;transition:width 0.3s ease}
         .temp-bar-fill.hot{background:linear-gradient(90deg,#ff9a56,#ff6b6b)}
         .temp-bar-fill.warm{background:linear-gradient(90deg,#ffd93d,#ff9a56)}
@@ -71,68 +76,68 @@
         .temp-bar-fill.cool{background:linear-gradient(90deg,#4d96ff,#6bcb77)}
         .temp-bar-fill.cold{background:linear-gradient(90deg,#00d4ff,#4d96ff)}
 
-        .color-legend{padding:10px 16px;border-top:1px solid #2a2d3a;background:#12141d;flex-shrink:0}
-        .legend-title{font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
-        .legend-bar{height:10px;border-radius:5px;background:linear-gradient(90deg,#0044ff,#00aaff,#00e5c8,#66ff66,#ccff00,#ffcc00,#ff8800,#ff4400,#cc0000);margin-bottom:3px}
-        .legend-labels{display:flex;justify-content:space-between;font-size:9px;color:#6b7280}
+        .color-legend{padding:8px 14px;border-top:1px solid #2a2d3a;background:#12141d;flex-shrink:0}
+        .legend-title{font-size:8px;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
+        .legend-bar{height:8px;border-radius:4px;margin-bottom:2px}
+        .legend-labels{display:flex;justify-content:space-between;font-size:8px;color:#6b7280}
 
-        .loading-overlay{display:none;position:absolute;inset:0;background:rgba(15,17,23,0.8);backdrop-filter:blur(4px);z-index:2000;align-items:center;justify-content:center;flex-direction:column;gap:12px}
+        .loading-overlay{display:none;position:absolute;inset:0;background:rgba(15,17,23,0.8);backdrop-filter:blur(4px);z-index:2000;align-items:center;justify-content:center;flex-direction:column;gap:10px}
         .loading-overlay.show{display:flex}
-        .spinner{width:36px;height:36px;border:3px solid #2a2d3a;border-top-color:#00d4ff;border-radius:50%;animation:spin 0.8s linear infinite}
+        .spinner{width:32px;height:32px;border:3px solid #2a2d3a;border-top-color:#00d4ff;border-radius:50%;animation:spin 0.8s linear infinite}
         @keyframes spin{to{transform:rotate(360deg)}}
-        .loading-text{font-size:13px;color:#6b7280}
-        .toast{position:fixed;bottom:20px;right:20px;background:#1e2030;border:1px solid #2a2d3a;border-radius:10px;padding:12px 16px;font-size:13px;color:#e0e0e0;z-index:3000;animation:toastIn 0.3s ease,toastOut 0.3s ease 2.7s;box-shadow:0 4px 20px rgba(0,0,0,0.4)}
-        @keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .loading-text{font-size:12px;color:#6b7280}
+        .toast{position:fixed;bottom:16px;right:16px;background:#1e2030;border:1px solid #2a2d3a;border-radius:8px;padding:10px 14px;font-size:12px;color:#e0e0e0;z-index:3000;animation:toastIn 0.3s ease,toastOut 0.3s ease 2.7s;box-shadow:0 4px 16px rgba(0,0,0,0.4)}
+        @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
         @keyframes toastOut{from{opacity:1}to{opacity:0}}
         .leaflet-container{background:#0f1117}
 
-        .data-source{display:inline-flex;align-items:center;gap:4px;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:600;margin-top:4px}
+        .data-source{display:inline-flex;align-items:center;gap:3px;padding:2px 5px;border-radius:3px;font-size:8px;font-weight:600;margin-top:3px}
         .data-source.real{background:rgba(34,197,94,0.15);color:#22c55e}
         .data-source.mock{background:rgba(251,191,36,0.15);color:#fbbf24}
 
-        .gpr-panel{position:absolute;top:20px;right:20px;width:500px;background:rgba(18,20,29,0.95);border:1px solid #2a2d3a;border-radius:12px;padding:16px;z-index:1000;display:none}
+        .gpr-panel{position:absolute;top:16px;right:16px;width:460px;background:rgba(18,20,29,0.95);border:1px solid #2a2d3a;border-radius:10px;padding:12px;z-index:1000;display:none}
         .gpr-panel.show{display:block}
-        .gpr-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-        .gpr-title{font-size:13px;font-weight:600;color:#00d4ff}
-        .gpr-close{background:none;border:none;color:#6b7280;font-size:18px;cursor:pointer;line-height:1}
+        .gpr-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+        .gpr-title{font-size:12px;font-weight:600;color:#00d4ff}
+        .gpr-close{background:none;border:none;color:#6b7280;font-size:16px;cursor:pointer;line-height:1}
         .gpr-close:hover{color:#e0e0e0}
-        .gpr-canvas{width:100%;height:200px;border-radius:8px;background:#0a0c14}
-        .gpr-info{display:flex;gap:16px;margin-top:10px;font-size:11px;color:#9ca3af}
-        .gpr-status{display:flex;align-items:center;gap:6px;margin-bottom:8px}
-        .gpr-status .dot{width:6px;height:6px;border-radius:50%;background:#ef4444}
+        .gpr-canvas{width:100%;height:180px;border-radius:6px;background:#0a0c14}
+        .gpr-info{display:flex;gap:12px;margin-top:8px;font-size:10px;color:#9ca3af}
+        .gpr-status{display:flex;align-items:center;gap:5px;margin-bottom:6px}
+        .gpr-status .dot{width:5px;height:5px;border-radius:50%;background:#ef4444}
         .gpr-status .dot.connected{background:#22c55e;animation:pulse 2s infinite}
-        .gpr-katmanlar{margin-top:10px;padding-top:10px;border-top:1px solid #2a2d3a}
-        .gpr-katman{display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid #1a1d2e}
+        .gpr-katmanlar{margin-top:8px;padding-top:8px;border-top:1px solid #2a2d3a}
+        .gpr-katman{display:flex;justify-content:space-between;font-size:10px;padding:3px 0;border-bottom:1px solid #1a1d2e}
         .gpr-katman .kat-name{color:#9ca3af}
         .gpr-katman .kat-depth{color:#00d4ff;font-family:monospace}
 
-        .threed-panel{position:absolute;bottom:20px;right:20px;width:400px;height:300px;background:rgba(18,20,29,0.95);border:1px solid #2a2d3a;border-radius:12px;overflow:hidden;z-index:1000;display:none}
+        .threed-panel{position:absolute;bottom:16px;right:16px;width:380px;height:280px;background:rgba(18,20,29,0.95);border:1px solid #2a2d3a;border-radius:10px;overflow:hidden;z-index:1000;display:none}
         .threed-panel.show{display:block}
-        .threed-header{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #2a2d3a;background:#12141d}
-        .threed-title{font-size:12px;font-weight:600;color:#00d4ff}
-        .threed-close{background:none;border:none;color:#6b7280;font-size:16px;cursor:pointer}
+        .threed-header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #2a2d3a;background:#12141d}
+        .threed-title{font-size:11px;font-weight:600;color:#00d4ff}
+        .threed-close{background:none;border:none;color:#6b7280;font-size:14px;cursor:pointer}
         .threed-close:hover{color:#e0e0e0}
-        #threed-canvas{width:100%;height:calc(100% - 40px)}
+        #threed-canvas{width:100%;height:calc(100% - 36px)}
 
-        .spectral-info{background:#12141d;border-radius:6px;padding:8px;margin-top:6px;font-size:10px}
-        .spectral-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #1a1d2e}
+        .spectral-info{background:#12141d;border-radius:5px;padding:6px;margin-top:5px;font-size:9px}
+        .spectral-row{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid #1a1d2e}
         .spectral-row:last-child{border-bottom:none}
         .spectral-label{color:#6b7280}
         .spectral-value{color:#e0e0e0;font-weight:500}
 
-        .subsurface-panel{position:absolute;top:20px;right:20px;width:440px;background:rgba(18,20,29,0.95);border:1px solid #2a2d3a;border-radius:12px;padding:16px;z-index:1000;display:none}
+        .subsurface-panel{position:absolute;top:16px;right:16px;width:420px;background:rgba(18,20,29,0.95);border:1px solid #2a2d3a;border-radius:10px;padding:12px;z-index:1000;display:none}
         .subsurface-panel.show{display:block}
-        .subsurface-title{font-size:13px;font-weight:600;color:#22c55e;margin-bottom:10px}
-        .subsurface-layers{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
-        .sub-layer-btn{padding:5px 10px;border:1px solid #2a2d3a;border-radius:6px;background:#1e2030;color:#6b7280;font-size:10px;cursor:pointer;transition:all 0.2s;font-family:'Inter',sans-serif}
+        .subsurface-title{font-size:12px;font-weight:600;color:#22c55e;margin-bottom:8px}
+        .subsurface-layers{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:8px}
+        .sub-layer-btn{padding:4px 8px;border:1px solid #2a2d3a;border-radius:5px;background:#1e2030;color:#6b7280;font-size:9px;cursor:pointer;transition:all 0.2s;font-family:'Inter',sans-serif}
         .sub-layer-btn:hover{border-color:#22c55e;color:#e0e0e0}
         .sub-layer-btn.active{border-color:#22c55e;background:rgba(34,197,94,0.1);color:#22c55e}
-        .depth-indicator{display:flex;align-items:center;gap:8px}
-        .depth-label{font-size:10px;color:#6b7280;min-width:50px}
-        .depth-slider{flex:1;-webkit-appearance:none;height:4px;border-radius:2px;background:#2a2d3a;outline:none}
-        .depth-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#22c55e;cursor:pointer;box-shadow:0 0 6px rgba(34,197,94,0.4)}
+        .depth-indicator{display:flex;align-items:center;gap:6px}
+        .depth-label{font-size:9px;color:#6b7280;min-width:45px}
+        .depth-slider{flex:1;-webkit-appearance:none;height:3px;border-radius:2px;background:#2a2d3a;outline:none}
+        .depth-slider::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#22c55e;cursor:pointer;box-shadow:0 0 5px rgba(34,197,94,0.4)}
 
-        .coord-display{position:absolute;bottom:10px;left:390px;background:rgba(18,20,29,0.9);border:1px solid #2a2d3a;border-radius:8px;padding:6px 12px;font-size:11px;color:#6b7280;z-index:999;font-family:monospace;pointer-events:none}
+        .coord-display{position:absolute;bottom:8px;left:368px;background:rgba(18,20,29,0.9);border:1px solid #2a2d3a;border-radius:6px;padding:5px 10px;font-size:10px;color:#6b7280;z-index:999;font-family:monospace;pointer-events:none}
     </style>
 </head>
 <body>
@@ -156,9 +161,9 @@
         </div>
         <div class="corner-hint" id="corner-hint">
             <div><span class="step" id="step-1">1</span> Sol ust kose</div>
-            <div style="margin-top:3px"><span class="step" id="step-2">2</span> Sag ust kose</div>
-            <div style="margin-top:3px"><span class="step" id="step-3">3</span> Sol alt kose</div>
-            <div style="margin-top:3px"><span class="step" id="step-4">4</span> Sag alt kose</div>
+            <div style="margin-top:2px"><span class="step" id="step-2">2</span> Sag ust kose</div>
+            <div style="margin-top:2px"><span class="step" id="step-3">3</span> Sol alt kose</div>
+            <div style="margin-top:2px"><span class="step" id="step-4">4</span> Sag alt kose</div>
         </div>
     </div>
 
@@ -173,13 +178,14 @@
             <div class="layer-group">
                 <div class="layer-group-label">Temel Harita</div>
                 <button class="layer-btn active" id="base-dark" onclick="setBaseLayer('dark')"><span class="ldot" style="background:#1a1d2e"></span> Karanlik Harita</button>
-                <button class="layer-btn" id="base-satellite" onclick="setBaseLayer('satellite')"><span class="ldot" style="background:#2d5a27"></span> Canli Uydu (Esri)</button>
+                <button class="layer-btn" id="base-satellite" onclick="setBaseLayer('satellite')"><span class="ldot" style="background:#2d5a27"></span> Uydu (Esri)</button>
                 <button class="layer-btn" id="base-topo" onclick="setBaseLayer('topo')"><span class="ldot" style="background:#c4a882"></span> Topografik</button>
                 <button class="layer-btn" id="base-terrain" onclick="setBaseLayer('terrain')"><span class="ldot" style="background:#6b8e5a"></span> Arazi</button>
             </div>
             <div class="layer-group">
                 <div class="layer-group-label">Termal & Spektral</div>
                 <button class="layer-btn" id="overlay-thermal" onclick="toggleOverlay('thermal')"><span class="ldot" style="background:linear-gradient(90deg,#00aaff,#ff4400)"></span> Termal Harita</button>
+                <div class="opacity-row" id="oprow-thermal"><label>Seffaflik</label><input type="range" class="opacity-slider" min="10" max="90" value="55" oninput="setOverlayOpacity('thermal',this.value)"></div>
                 <button class="layer-btn" id="overlay-ndvi" onclick="toggleOverlay('ndvi')"><span class="ldot" style="background:#66ff66"></span> Bitki Orani (NDVI)</button>
                 <button class="layer-btn" id="overlay-moisture" onclick="toggleOverlay('moisture')"><span class="ldot" style="background:#0088ff"></span> Nem / Su Orani</button>
                 <button class="layer-btn" id="overlay-topsoil" onclick="toggleOverlay('topsoil')"><span class="ldot" style="background:#8B4513"></span> Toprak Turu</button>
@@ -224,7 +230,7 @@
 </div>
 
 <div id="map"></div>
-<div class="coord-display" id="coord-display">39.9000 N, 32.8000 E | 0m</div>
+<div class="coord-display" id="coord-display">39.9000 N, 32.8000 E</div>
 
 <div class="subsurface-panel" id="subsurface-panel">
     <div class="subsurface-title">&#127793; Yeralti Kesit Goruntusu</div>
@@ -240,7 +246,7 @@
         <input type="range" class="depth-slider" id="depth-slider" min="0" max="4" value="0" oninput="changeDepth(this.value)">
         <span class="depth-label" style="text-align:right" id="depth-max">1000m</span>
     </div>
-    <canvas id="sub-canvas" style="width:100%;height:120px;border-radius:8px;margin-top:8px;background:#0a0c14"></canvas>
+    <canvas id="sub-canvas" style="width:100%;height:130px;border-radius:6px;margin-top:6px;background:#0a0c14"></canvas>
 </div>
 
 <div class="gpr-panel" id="gpr-panel">
@@ -277,15 +283,16 @@ var activeOverlays={},currentBaseLayer='dark',baseLayers={};
 var lastAreaBounds=null,currentDepth=0;
 var lastSubCoords={lat:39.9,lng:32.8};
 var depthRanges=['Yuzey','0-50m','50-200m','200-500m','500-1000m'];
-var gprEventSource=null,gprData=[],gprAnimFrame=null;
+var gprEventSource=null,gprData=[];
 var threeScene=null,threeCamera=null,threeRenderer=null;
+var overlayOpacities={thermal:0.55,ndvi:0.6,moisture:0.6,topsoil:0.6,sub:0.6,zemin:0.6,vs30:0.6,heyelan:0.6,mineral:0.6,surftemp:0.6};
 
 function initMap(){
     map=L.map('map',{center:[39.9,32.8],zoom:6,zoomControl:false,attributionControl:false});
     baseLayers.dark=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19});
     baseLayers.satellite=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:18});
     baseLayers.topo=L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{maxZoom:17});
-    baseLayers.terrain=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:18});
+    baseLayers.terrain=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Terrain_Base_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:13});
     baseLayers.dark.addTo(map);
     L.control.zoom({position:'topright'}).addTo(map);
     map.on('click',function(e){
@@ -304,10 +311,8 @@ function initMap(){
             rectStart=null;
         }
     });
-    drawSubsurface(39.9,32.8);
     map.on('mousemove',function(e){
-        var c=document.getElementById('coord-display');
-        c.textContent=e.latlng.lat.toFixed(4)+' N, '+e.latlng.lng.toFixed(4)+' E';
+        document.getElementById('coord-display').textContent=e.latlng.lat.toFixed(4)+' N, '+e.latlng.lng.toFixed(4)+' E';
     });
 }
 
@@ -344,7 +349,7 @@ function clearCornerPoints(){
 function addCornerPoint(lat,lng){
     var num=cornerPoints.length+1;
     var colors=['#00d4ff','#ff6b6b','#22c55e','#ffd93d'];
-    var marker=L.circleMarker([lat,lng],{radius:8,color:colors[num-1],fillColor:colors[num-1],fillOpacity:0.9,weight:2}).addTo(map);
+    var marker=L.circleMarker([lat,lng],{radius:7,color:colors[num-1],fillColor:colors[num-1],fillOpacity:0.9,weight:2}).addTo(map);
     cornerMarkers.push(marker);
     cornerPoints.push({lat:lat,lng:lng});
     var el=document.getElementById('step-'+num);if(el)el.classList.add('done');
@@ -392,42 +397,36 @@ async function analyzeArea(north,west,south,east){
     showLoading(false);
 }
 
+function setOverlayOpacity(type,val){
+    overlayOpacities[type]=val/100;
+    if(activeOverlays[type]&&activeOverlays[type]._canvas){
+        activeOverlays[type]._canvas.style.opacity=val/100;
+    }
+}
+
 function toggleOverlay(type){
     var btn=document.getElementById('overlay-'+type);
-    if(activeOverlays[type]){map.removeLayer(activeOverlays[type]);delete activeOverlays[type];btn.classList.remove('active');if(type==='thermal')document.getElementById('color-legend').style.display='none';return;}
+    if(activeOverlays[type]){map.removeLayer(activeOverlays[type]);delete activeOverlays[type];btn.classList.remove('active');document.getElementById('oprow-'+type).classList.remove('show');if(type==='thermal')document.getElementById('color-legend').style.display='none';return;}
     btn.classList.add('active');
-    if(!lastAreaBounds){showToast('Once bir alan secin');btn.classList.remove('active');return;}
+    document.getElementById('oprow-'+type).classList.add('show');
+    if(!lastAreaBounds){showToast('Once bir alan secin');btn.classList.remove('active');document.getElementById('oprow-'+type).classList.remove('show');return;}
     var b=lastAreaBounds;
     var overlayNames={thermal:'Termal Harita',ndvi:'Bitki Orani',moisture:'Nem Verisi',topsoil:'Toprak Turu',sub:'Yeralti Isi',zemin:'Zemin Sinifi',vs30:'Vs30 Hizi',heyelan:'Heyelan Riski',mineral:'Mineral Bilesim',surftemp:'Yuzey Sicakligi'};
     showToast((overlayNames[type]||type)+' yukleniyor...');
     if(type==='thermal'){
-        fetch('/api/thermal-grid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){return r.json()}).then(function(d){renderCanvasOverlay(d,'thermal')}).catch(function(){showToast('Termal veri yuklenemedi');btn.classList.remove('active');});
+        fetch('/api/thermal-grid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){return r.json()}).then(function(d){renderSmoothOverlay(d,'thermal')}).catch(function(){showToast('Termal veri yuklenemedi');btn.classList.remove('active');document.getElementById('oprow-thermal').classList.remove('show');});
     }else if(type==='zemin'||type==='vs30'||type==='heyelan'){
-        fetch('/api/geological-data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){return r.json()}).then(function(d){
-            renderGeoOverlay(d,type);
-        }).catch(function(){showToast('Jeolojik veri yuklenemedi');btn.classList.remove('active');});
+        fetch('/api/geological-data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){return r.json()}).then(function(d){renderGeoOverlay(d,type)}).catch(function(){showToast('Jeolojik veri yuklenemedi');btn.classList.remove('active');document.getElementById('oprow-'+type).classList.remove('show');});
     }else if(type==='mineral'||type==='surftemp'){
         fetch('/api/spectral-analysis',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){return r.json()}).then(function(d){
             var key=type==='mineral'?'mineral':'surface_temp';
-            renderCanvasOverlay({bounds:d.bounds,grid_size:d.grid_size,grid:d[key].grid,min_temp:d[key].min,max_temp:d[key].max},type);
-        }).catch(function(){showToast('Spektral veri yuklenemedi');btn.classList.remove('active');});
-    }else if(type==='ndvi'||type==='moisture'||type==='topsoil'||type==='sub'){
+            renderSmoothOverlay({bounds:d.bounds,grid_size:d.grid_size,grid:d[key].grid,min_temp:d[key].min,max_temp:d[key].max},type);
+        }).catch(function(){showToast('Spektral veri yuklenemedi');btn.classList.remove('active');document.getElementById('oprow-'+type).classList.remove('show');});
+    }else{
         fetch('/api/environmental-grid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){return r.json()}).then(function(d){
             var key=type==='ndvi'?'ndvi':type==='moisture'?'moisture':type==='topsoil'?'topsoil':'sub_heat';
-            renderCanvasOverlay({bounds:d.bounds,grid_size:d.grid_size,grid:d[key].grid,min_temp:d[key].min,max_temp:d[key].max},type);
-        }).catch(function(){
-            var gs=30,grid=[];
-            for(var i=0;i<gs;i++)for(var j=0;j<gs;j++){
-                var lat=b.south+(b.north-b.south)*i/(gs-1),lng=b.west+(b.east-b.west)*j/(gs-1);
-                var v=0;
-                if(type==='ndvi')v=0.3+0.5*Math.sin(lat*0.1)*Math.cos(lng*0.15)+0.2*Math.random();
-                else if(type==='moisture')v=0.2+0.4*Math.cos(lat*0.08)*Math.sin(lng*0.12)+0.15*Math.random();
-                else if(type==='topsoil')v=Math.sin(lat*0.2+lng*0.1)*0.5+0.5;
-                else if(type==='sub')v=0.2+0.6*(1-Math.abs(Math.sin(lat*0.05+lng*0.03)))+0.2*Math.random();
-                grid.push(Math.max(0,Math.min(1,v)));
-            }
-            renderCanvasOverlay({bounds:b,grid_size:gs,grid:grid,min_temp:0,max_temp:1},type);
-        });
+            renderSmoothOverlay({bounds:d.bounds,grid_size:d.grid_size,grid:d[key].grid,min_temp:d[key].min,max_temp:d[key].max},type);
+        }).catch(function(){showToast('Veri yuklenemedi');btn.classList.remove('active');document.getElementById('oprow-'+type).classList.remove('show');});
     }
 }
 
@@ -437,41 +436,98 @@ function bilinearInterpolate(grid,gs,x,y){
     return(grid[y0*gs+x0]*(1-fx)+grid[y0*gs+x1]*fx)*(1-fy)+(grid[y1*gs+x0]*(1-fx)+grid[y1*gs+x1]*fx)*fy;
 }
 
-function getColor(t,type){
+function clientGaussianBlur(grid,gs,sigma){
+    var r=Math.ceil(sigma*2);
+    var out=[];
+    for(var i=0;i<gs;i++){
+        for(var j=0;j<gs;j++){
+            var val=0,ws=0;
+            for(var di=-r;di<=r;di++){
+                for(var dj=-r;dj<=r;dj++){
+                    var ni=i+di,nj=j+dj;
+                    if(ni>=0&&ni<gs&&nj>=0&&nj<gs){
+                        var w=Math.exp(-(di*di+dj*dj)/(2*sigma*sigma));
+                        val+=grid[ni*gs+nj]*w;
+                        ws+=w;
+                    }
+                }
+            }
+            out.push(val/ws);
+        }
+    }
+    return out;
+}
+
+function getColorRamp(t,type){
     if(type==='thermal'){
-        var s=[[0,0,68,255],[.12,0,170,255],[.25,0,229,200],[.37,102,255,102],[.5,204,255,0],[.62,255,204,0],[.75,255,136,0],[.87,255,68,0],[1,204,0,0]];
+        var s=[[0,20,60,200],[0.15,0,150,255],[0.3,0,220,200],[0.45,50,220,100],[0.55,180,230,50],[0.65,240,200,0],[0.75,255,140,0],[0.85,255,60,0],[1,200,0,0]];
         var i=0;while(i<s.length-1&&s[i+1][0]<t)i++;if(i>=s.length-1)i=s.length-2;
         var f=(t-s[i][0])/(s[i+1][0]-s[i][0]);f=f*f*(3-2*f);
         return[Math.round(s[i][1]+(s[i+1][1]-s[i][1])*f),Math.round(s[i][2]+(s[i+1][2]-s[i][2])*f),Math.round(s[i][3]+(s[i+1][3]-s[i][3])*f)];
     }
-    if(type==='ndvi')return[Math.round(80-t*80),Math.round(40+t*215),Math.round(20+t*30)];
-    if(type==='moisture')return[Math.round(20+t*20),Math.round(60+t*100),Math.round(100+t*155)];
-    if(type==='topsoil')return[Math.round(60+t*140),Math.round(30+t*80),Math.round(10+t*20)];
-    if(type==='sub')return[Math.round(255-t*200),Math.round(100-t*60),Math.round(20+t*40)];
-    if(type==='mineral')return[Math.round(100+t*155),Math.round(60+t*80),Math.round(20+t*20)];
-    if(type==='surftemp')return[Math.round(20+t*200),Math.round(100-t*80),Math.round(20+t*30)];
-    if(type==='vs30')return[Math.round(200-t*150),Math.round(180-t*100),Math.round(50+t*100)];
+    if(type==='ndvi'){
+        var s=[[0,60,30,10],[0.3,20,100,20],[0.6,60,180,40],[0.8,30,200,30],[1,10,140,10]];
+        var i=0;while(i<s.length-1&&s[i+1][0]<t)i++;if(i>=s.length-1)i=s.length-2;
+        var f=(t-s[i][0])/(s[i+1][0]-s[i][0]);return[Math.round(s[i][1]+(s[i+1][1]-s[i][1])*f),Math.round(s[i][2]+(s[i+1][2]-s[i][2])*f),Math.round(s[i][3]+(s[i+1][3]-s[i][3])*f)];
+    }
+    if(type==='moisture'){
+        var s=[[0,30,20,10],[0.3,10,80,120],[0.6,10,150,200],[1,20,200,255]];
+        var i=0;while(i<s.length-1&&s[i+1][0]<t)i++;if(i>=s.length-1)i=s.length-2;
+        var f=(t-s[i][0])/(s[i+1][0]-s[i][0]);return[Math.round(s[i][1]+(s[i+1][1]-s[i][1])*f),Math.round(s[i][2]+(s[i+1][2]-s[i][2])*f),Math.round(s[i][3]+(s[i+1][3]-s[i][3])*f)];
+    }
+    if(type==='topsoil'){
+        var s=[[0,60,30,10],[0.3,100,60,20],[0.6,140,90,40],[1,100,70,30]];
+        var i=0;while(i<s.length-1&&s[i+1][0]<t)i++;if(i>=s.length-1)i=s.length-2;
+        var f=(t-s[i][0])/(s[i+1][0]-s[i][0]);return[Math.round(s[i][1]+(s[i+1][1]-s[i][1])*f),Math.round(s[i][2]+(s[i+1][2]-s[i][2])*f),Math.round(s[i][3]+(s[i+1][3]-s[i][3])*f)];
+    }
+    if(type==='sub'){
+        var s=[[0,20,60,140],[0.3,200,120,40],[0.6,255,80,20],[1,200,30,10]];
+        var i=0;while(i<s.length-1&&s[i+1][0]<t)i++;if(i>=s.length-1)i=s.length-2;
+        var f=(t-s[i][0])/(s[i+1][0]-s[i][0]);return[Math.round(s[i][1]+(s[i+1][1]-s[i][1])*f),Math.round(s[i][2]+(s[i+1][2]-s[i][2])*f),Math.round(s[i][3]+(s[i+1][3]-s[i][3])*f)];
+    }
+    if(type==='mineral'){
+        var s=[[0,80,50,20],[0.4,160,100,40],[0.7,200,140,60],[1,240,180,80]];
+        var i=0;while(i<s.length-1&&s[i+1][0]<t)i++;if(i>=s.length-1)i=s.length-2;
+        var f=(t-s[i][0])/(s[i+1][0]-s[i][0]);return[Math.round(s[i][1]+(s[i+1][1]-s[i][1])*f),Math.round(s[i][2]+(s[i+1][2]-s[i][2])*f),Math.round(s[i][3]+(s[i+1][3]-s[i][3])*f)];
+    }
+    if(type==='surftemp'){
+        var s=[[0,20,60,180],[0.3,20,150,120],[0.6,200,160,40],[1,240,60,20]];
+        var i=0;while(i<s.length-1&&s[i+1][0]<t)i++;if(i>=s.length-1)i=s.length-2;
+        var f=(t-s[i][0])/(s[i+1][0]-s[i][0]);return[Math.round(s[i][1]+(s[i+1][1]-s[i][1])*f),Math.round(s[i][2]+(s[i+1][2]-s[i][2])*f),Math.round(s[i][3]+(s[i+1][3]-s[i][3])*f)];
+    }
+    if(type==='vs30'){
+        var s=[[0,200,50,50],[0.3,220,160,40],[0.6,100,160,200],[1,40,80,200]];
+        var i=0;while(i<s.length-1&&s[i+1][0]<t)i++;if(i>=s.length-1)i=s.length-2;
+        var f=(t-s[i][0])/(s[i+1][0]-s[i][0]);return[Math.round(s[i][1]+(s[i+1][1]-s[i][1])*f),Math.round(s[i][2]+(s[i+1][2]-s[i][2])*f),Math.round(s[i][3]+(s[i+1][3]-s[i][3])*f)];
+    }
     if(type==='heyelan'){
-        if(t<0.3)return[Math.round(50+t*200),Math.round(200-t*100),Math.round(50)];
-        if(t<0.6)return[Math.round(200+t*55),Math.round(150-t*100),Math.round(0)];
-        return[Math.round(220),Math.round(50-t*50),Math.round(0)];
+        var s=[[0,30,180,60],[0.3,100,180,40],[0.6,220,140,30],[1,220,40,20]];
+        var i=0;while(i<s.length-1&&s[i+1][0]<t)i++;if(i>=s.length-1)i=s.length-2;
+        var f=(t-s[i][0])/(s[i+1][0]-s[i][0]);return[Math.round(s[i][1]+(s[i+1][1]-s[i][1])*f),Math.round(s[i][2]+(s[i+1][2]-s[i][2])*f),Math.round(s[i][3]+(s[i+1][3]-s[i][3])*f)];
     }
     return[128,128,128];
 }
 
-function renderCanvasOverlay(data,type){
+function normalizeGrid(grid,minV,maxV){
+    if(maxV===minV)return grid.map(function(){return 0.5});
+    return grid.map(function(v){return max(0,min(1,(v-minV)/(maxV-minV)))});
+    function max(a,b){return a>b?a:b}
+    function min(a,b){return a<b?a:b}
+}
+
+function renderSmoothOverlay(data,type){
     if(activeOverlays[type]){map.removeLayer(activeOverlays[type]);delete activeOverlays[type];}
     var b=data.bounds,gs=data.grid_size,grid=data.grid,minT=data.min_temp,maxT=data.max_temp;
     var labels={
-        thermal:['Sicaklik Skalasi','linear-gradient(90deg,#0044ff,#00aaff,#00e5c8,#66ff66,#ccff00,#ffcc00,#ff8800,#ff4400,#cc0000)',minT.toFixed(0)+' C',((minT+maxT)/2).toFixed(0)+' C',maxT.toFixed(0)+' C'],
-        ndvi:['Bitki Orani (NDVI)','linear-gradient(90deg,#502814,#20b032)','Cok Dusuk','Orta','Yuksek'],
-        moisture:['Nem / Su Orani','linear-gradient(90deg,#143c64,#00c8ff)','Kuru','Orta','Islak'],
-        topsoil:['Toprak Turu','linear-gradient(90deg,#3c1e0a,#c85014)','Killi','Torbali','Humus'],
-        sub:['Yeralti Isi','linear-gradient(90deg,#ff6414,#382800)','Dusuk','Orta','Yuksek'],
-        mineral:['Mineral Bilesim','linear-gradient(90deg,#643c14,#ff9c50)','Fakir','Orta','Zengin'],
-        surftemp:['Yuzey Sicakligi','linear-gradient(90deg,#1464c8,#ff6400)','Dusuk','Orta','Yuksek'],
-        vs30:['Vs30 Dalga Hizi','linear-gradient(90deg,#c89632,#3264c8)','Yavas (150m/s)','Orta (500m/s)','Hizli (1500m/s)'],
-        heyelan:['Heyelan Riski','linear-gradient(90deg,#32c832,#ff3200)','Dusuk','Orta','Yuksek']
+        thermal:['Sicaklik Skalasi','linear-gradient(90deg,#143cc8,#00aaff,#00e5c8,#b4e632,#f0c800,#ff8800,#ff4400,#c80000)',minT.toFixed(1)+' C',((minT+maxT)/2).toFixed(1)+' C',maxT.toFixed(1)+' C'],
+        ndvi:['Bitki Orani (NDVI)','linear-gradient(90deg,#3c1e0a,#146414,#3cb428,#1ec81e)','Cok Dusuk','Orta','Yuksek'],
+        moisture:['Nem / Su Orani','linear-gradient(90deg,#1e140a,#0a5078,#0a96c8','#14c8ff)','Kuru','Orta','Islak'],
+        topsoil:['Toprak Turu','linear-gradient(90deg,#3c1e0a,#643c14,#8c5a28,#64461e)','Killi','Kumlu','Humus'],
+        sub:['Yeralti Isi','linear-gradient(90deg,#143c8c,#c87828,#ff5014,#c81e0a)','Dusuk','Orta','Yuksek'],
+        mineral:['Mineral Bilesim','linear-gradient(90deg,#503214,#a06428,#c88c3c,#f0b450)','Fakir','Orta','Zengin'],
+        surftemp:['Yuzey Sicakligi','linear-gradient(90deg,#143cb4,#149678,#c8a028,#f03c14)','Dusuk','Orta','Yuksek'],
+        vs30:['Vs30 Dalga Hizi','linear-gradient(90deg,#c83232,#dc9628,#64a0c8','#2850c8)','Yavas (150m/s)','Orta (500m/s)','Hizli (1500m/s)'],
+        heyelan:['Heyelan Riski','linear-gradient(90deg,#1eb43c,#dc8c1e,#dc2814)','Dusuk','Orta','Yuksek']
     };
     var lb=labels[type];
     document.getElementById('legend-label').textContent=lb[0];
@@ -485,10 +541,10 @@ function renderCanvasOverlay(data,type){
         onAdd:function(map){
             this._map=map;var pane=this.getPane();
             this._canvas=document.createElement('canvas');
-            this._canvas.style.cssText='position:absolute;pointer-events:none;opacity:0.6';
+            this._canvas.style.cssText='position:absolute;pointer-events:none;opacity:'+overlayOpacities[type];
             pane.appendChild(this._canvas);
             this._tip=document.createElement('div');
-            this._tip.style.cssText='position:absolute;display:none;background:rgba(15,17,23,0.9);border:1px solid #00d4ff;color:#e0e0e0;padding:4px 8px;border-radius:6px;font-size:11px;font-family:Inter,sans-serif;pointer-events:none;z-index:9999;white-space:nowrap;';
+            this._tip.style.cssText='position:absolute;display:none;background:rgba(10,12,20,0.92);border:1px solid #00d4ff;color:#e0e0e0;padding:4px 8px;border-radius:5px;font-size:10px;font-family:Inter,sans-serif;pointer-events:none;z-index:9999;white-space:nowrap;';
             pane.appendChild(this._tip);
             this._draw();
             map.on('moveend zoomend',this._draw,this);
@@ -505,7 +561,7 @@ function renderCanvasOverlay(data,type){
             var gx=(lng-b.west)/(b.east-b.west)*(gs-1),gy=(lat-b.south)/(b.north-b.south)*(gs-1);
             var val=bilinearInterpolate(grid,gs,gx,gy);
             var info='';
-            if(type==='thermal')info=Math.round(minT+val*(maxT-minT)*10)/10+' C';
+            if(type==='thermal')info=Math.round((minT+val*(maxT-minT))*10)/10+' C';
             else if(type==='ndvi')info='NDVI: '+val.toFixed(2);
             else if(type==='moisture')info='Nem: %'+Math.round(val*100);
             else if(type==='topsoil')info=['Killi','Kumlu','Torbali','Humus'][Math.min(3,Math.floor(val*4))];
@@ -514,8 +570,8 @@ function renderCanvasOverlay(data,type){
             else if(type==='surftemp')info='Sicaklik: '+val.toFixed(2);
             else if(type==='vs30')info='Vs30: ~'+Math.round(val*1500)+' m/s';
             else if(type==='heyelan')info='Risk: %'+Math.round(val*100);
-            var px=e.originalEvent.clientX-map.getContainer().getBoundingClientRect().left+15;
-            var py=e.originalEvent.clientY-map.getContainer().getBoundingClientRect().top-10;
+            var px=e.originalEvent.clientX-map.getContainer().getBoundingClientRect().left+12;
+            var py=e.originalEvent.clientY-map.getContainer().getBoundingClientRect().top-8;
             this._tip.innerHTML='<b>'+info+'</b>';this._tip.style.left=px+'px';this._tip.style.top=py+'px';this._tip.style.display='block';
         },
         _draw:function(){
@@ -523,16 +579,19 @@ function renderCanvasOverlay(data,type){
             var nw=this._map.latLngToContainerPoint(L.latLng(b.north,b.west));
             var se=this._map.latLngToContainerPoint(L.latLng(b.south,b.east));
             var w=Math.abs(se.x-nw.x),h=Math.abs(se.y-nw.y);if(w<2||h<2)return;
-            var rw=Math.max(w,200),rh=Math.max(h,200);
+            var rw=Math.max(w,300),rh=Math.max(h,300);
             this._canvas.width=rw;this._canvas.height=rh;
             this._canvas.style.width=w+'px';this._canvas.style.height=h+'px';
             this._canvas.style.left=Math.min(nw.x,se.x)+'px';this._canvas.style.top=Math.min(nw.y,se.y)+'px';
             var ctx=this._canvas.getContext('2d'),img=ctx.createImageData(rw,rh);
-            for(var py=0;py<rh;py++)for(var px=0;px<rw;px++){
-                var gx=(px/rw)*(gs-1),gy=(1-py/rh)*(gs-1);
-                var val=bilinearInterpolate(grid,gs,gx,gy);
-                var rgb=getColor(val,type);
-                var idx=(py*rw+px)*4;img.data[idx]=rgb[0];img.data[idx+1]=rgb[1];img.data[idx+2]=rgb[2];img.data[idx+3]=200;
+            for(var py=0;py<rh;py++){
+                for(var px=0;px<rw;px++){
+                    var gx=(px/rw)*(gs-1),gy=(1-py/rh)*(gs-1);
+                    var val=bilinearInterpolate(grid,gs,gx,gy);
+                    var rgb=getColorRamp(val,type);
+                    var idx=(py*rw+px)*4;
+                    img.data[idx]=rgb[0];img.data[idx+1]=rgb[1];img.data[idx+2]=rgb[2];img.data[idx+3]=220;
+                }
             }
             ctx.putImageData(img,0,0);
         }
@@ -545,8 +604,8 @@ function renderGeoOverlay(data,type){
     var b=data.bounds,gs=data.grid_size;
     var labels={
         zemin:['Zemin Sinifi','linear-gradient(90deg,#2d5a27,#6b8e5a,#c4a882,#d4a574,#cc6633)','ZA','ZB','ZC','ZD','ZE'],
-        vs30:['Vs30 Dalga Hizi (m/s)','linear-gradient(90deg,#c89632,#3264c8)','150','800','1500'],
-        heyelan:['Heyelan Riski','linear-gradient(90deg,#32c832,#ff3200)','Dusuk','Orta','Yuksek']
+        vs30:['Vs30 Dalga Hizi (m/s)','linear-gradient(90deg,#c83232,#dc9628,#64a0c8,#2850c8)','150','800','1500'],
+        heyelan:['Heyelan Riski','linear-gradient(90deg,#1eb43c,#dc8c1e,#dc2814)','Dusuk','Orta','Yuksek']
     };
     var lb=labels[type];
     document.getElementById('legend-label').textContent=lb[0];
@@ -560,10 +619,10 @@ function renderGeoOverlay(data,type){
         onAdd:function(map){
             this._map=map;var pane=this.getPane();
             this._canvas=document.createElement('canvas');
-            this._canvas.style.cssText='position:absolute;pointer-events:none;opacity:0.6';
+            this._canvas.style.cssText='position:absolute;pointer-events:none;opacity:0.55';
             pane.appendChild(this._canvas);
             this._tip=document.createElement('div');
-            this._tip.style.cssText='position:absolute;display:none;background:rgba(15,17,23,0.9);border:1px solid #00d4ff;color:#e0e0e0;padding:4px 8px;border-radius:6px;font-size:11px;font-family:Inter,sans-serif;pointer-events:none;z-index:9999;white-space:nowrap;';
+            this._tip.style.cssText='position:absolute;display:none;background:rgba(10,12,20,0.92);border:1px solid #00d4ff;color:#e0e0e0;padding:4px 8px;border-radius:5px;font-size:10px;font-family:Inter,sans-serif;pointer-events:none;z-index:9999;white-space:nowrap;';
             pane.appendChild(this._tip);
             this._draw();
             map.on('moveend zoomend',this._draw,this);
@@ -585,8 +644,8 @@ function renderGeoOverlay(data,type){
                 else if(type==='vs30')info='Vs30: '+data.zemin_grid[idx].vs30+' m/s';
                 else if(type==='heyelan')info='Heyelan Riski: %'+Math.round(data.heyelan_riski*100);
             }
-            var px=e.originalEvent.clientX-map.getContainer().getBoundingClientRect().left+15;
-            var py=e.originalEvent.clientY-map.getContainer().getBoundingClientRect().top-10;
+            var px=e.originalEvent.clientX-map.getContainer().getBoundingClientRect().left+12;
+            var py=e.originalEvent.clientY-map.getContainer().getBoundingClientRect().top-8;
             this._tip.innerHTML='<b>'+info+'</b>';this._tip.style.left=px+'px';this._tip.style.top=py+'px';this._tip.style.display='block';
         },
         _draw:function(){
@@ -594,24 +653,29 @@ function renderGeoOverlay(data,type){
             var nw=this._map.latLngToContainerPoint(L.latLng(b.north,b.west));
             var se=this._map.latLngToContainerPoint(L.latLng(b.south,b.east));
             var w=Math.abs(se.x-nw.x),h=Math.abs(se.y-nw.y);if(w<2||h<2)return;
-            var rw=Math.max(w,200),rh=Math.max(h,200);
+            var rw=Math.max(w,300),rh=Math.max(h,300);
             this._canvas.width=rw;this._canvas.height=rh;
             this._canvas.style.width=w+'px';this._canvas.style.height=h+'px';
             this._canvas.style.left=Math.min(nw.x,se.x)+'px';this._canvas.style.top=Math.min(nw.y,se.y)+'px';
             var ctx=this._canvas.getContext('2d'),img=ctx.createImageData(rw,rh);
-            for(var py=0;py<rh;py++)for(var px=0;px<rw;px++){
-                var gx=Math.floor((px/rw)*(gs-1)),gy=Math.floor((1-py/rh)*(gs-1));
-                var idx=gy*gs+gx;var cell=data.zemin_grid[idx];
-                var rgb;
-                if(type==='zemin'){
-                    var c=cell.renk.replace('#','');
-                    rgb=[parseInt(c.substr(0,2),16),parseInt(c.substr(2,2),16),parseInt(c.substr(4,2),16)];
-                }else if(type==='vs30'){
-                    var t=cell.vs30/1500;rgb=getColor(t,'vs30');
-                }else{
-                    var t=data.heyelan_riski;rgb=getColor(t,'heyelan');
+            for(var py=0;py<rh;py++){
+                for(var px=0;px<rw;px++){
+                    var gx=Math.floor((px/rw)*(gs-1));
+                    var gy=Math.floor((1-py/rh)*(gs-1));
+                    var idx=gy*gs+gx;
+                    if(idx>=data.zemin_grid.length)continue;
+                    var cell=data.zemin_grid[idx];
+                    var rgb;
+                    if(type==='zemin'){
+                        var c=cell.renk.replace('#','');
+                        rgb=[parseInt(c.substr(0,2),16),parseInt(c.substr(2,2),16),parseInt(c.substr(4,2),16)];
+                    }else if(type==='vs30'){
+                        var t=cell.vs30/1500;rgb=getColorRamp(t,'vs30');
+                    }else{
+                        var t=data.heyelan_riski;rgb=getColorRamp(t,'heyelan');
+                    }
+                    var i4=(py*rw+px)*4;img.data[i4]=rgb[0];img.data[i4+1]=rgb[1];img.data[i4+2]=rgb[2];img.data[i4+3]=220;
                 }
-                var i4=(py*rw+px)*4;img.data[i4]=rgb[0];img.data[i4+1]=rgb[1];img.data[i4+2]=rgb[2];img.data[i4+3]=200;
             }
             ctx.putImageData(img,0,0);
         }
@@ -627,22 +691,19 @@ function showSubsurface(lat,lng){
 
 function drawSubsurface(lat,lng){
     var canvas=document.getElementById('sub-canvas');
-    canvas.width=420;canvas.height=140;
+    canvas.width=420;canvas.height=130;
     var ctx=canvas.getContext('2d');
-    ctx.fillStyle='#0a0c14';ctx.fillRect(0,0,420,140);
-
-    var layerSeed=parseInt((lat*1000+lng*100)%100);
+    ctx.fillStyle='#0a0c14';ctx.fillRect(0,0,420,130);
+    var layerSeed=Math.abs(Math.round((lat*1000+lng*100)%100));
     var layers=[
-        {name:'Bitki Orani',color:'#2d5a27',h:16},
-        {name:'Humus/Kill Toprak',color:'#8B4513',h:20},
-        {name:'Silt/Kum Tabakasi',color:'#a0906a',h:22},
-        {name:'Sediment (Aluvyon)',color:'#b8a88a',h:18},
-        {name:'Kireçtaşı/Granit',color:'#707070',h:24},
-        {name:'Ana Kaya',color:'#505050',h:40}
+        {name:'Bitki Orani',color:'#2d5a27',h:15},
+        {name:'Killi Toprak',color:'#8B4513',h:18},
+        {name:'Silt/Kum',color:'#a0906a',h:18},
+        {name:'Sediment',color:'#b8a88a',h:16},
+        {name:'Kirec Taski',color:'#707070',h:22},
+        {name:'Ana Kaya',color:'#505050',h:41}
     ];
-    var subtypes=['Killi Toprak','Kill+Kum','Kirecli Kum','Granit','Metamorfik'];
     var y=0,heatScale=currentDepth/4;
-
     layers.forEach(function(l,i){
         if(y>=120)return;
         var h=Math.min(l.h,120-y);
@@ -650,27 +711,18 @@ function drawSubsurface(lat,lng){
         grad.addColorStop(0,l.color);
         var c=l.color.replace('#','');
         var r=parseInt(c.substr(0,2),16),g=parseInt(c.substr(2,2),16),b=parseInt(c.substr(4,2),16);
-        r=Math.min(255,r+Math.round(heatScale*60*(i/5)));
-        g=Math.max(0,g-Math.round(heatScale*20*(i/5)));
-        grad.addColorStop(1,'rgb('+r+','+g+','+Math.max(0,b-Math.round(heatScale*30))+')');
+        r=Math.min(255,r+Math.round(heatScale*50*(i/5)));
+        grad.addColorStop(1,'rgb('+r+','+Math.max(0,g-Math.round(heatScale*15))+','+Math.max(0,b-Math.round(heatScale*25))+')');
         ctx.fillStyle=grad;ctx.fillRect(0,y,420,h);
-
-        ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=0.5;
-        for(var gy=y;gy<y+h;gy+=3){
-            var noise=Math.sin(gy*0.3+layerSeed)*2;
-            ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(420,gy);ctx.stroke();
-        }
-
-        ctx.fillStyle='rgba(255,255,255,0.7)';ctx.font='9px Inter';
-        ctx.fillText(l.name,8,y+h/2+3);
+        ctx.fillStyle='rgba(255,255,255,0.65)';ctx.font='9px Inter';
+        ctx.fillText(l.name,6,y+h/2+3);
         y+=h;
     });
-
     var depthLabels=['Yuzey','0-50m','50-200m','200-500m','500-1000m'];
     var tempBase=12+heatScale*35;
-    ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillRect(0,120,420,20);
-    ctx.fillStyle='rgba(0,212,255,0.9)';ctx.font='bold 10px Inter';
-    ctx.fillText('Derinlik: '+depthLabels[currentDepth]+' | Sicaklik: ~'+tempBase.toFixed(0)+' C | '+lat.toFixed(2)+'N, '+lng.toFixed(2)+'E',8,133);
+    ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillRect(0,118,420,14);
+    ctx.fillStyle='rgba(0,212,255,0.9)';ctx.font='bold 9px Inter';
+    ctx.fillText('Derinlik: '+depthLabels[currentDepth]+' | Sicaklik: ~'+tempBase.toFixed(0)+' C | '+lat.toFixed(2)+'N, '+lng.toFixed(2)+'E',6,128);
 }
 
 function setSubLayer(el,idx){
@@ -695,7 +747,6 @@ function startGPR(lat,lng){
     document.getElementById('gpr-panel').classList.add('show');
     document.getElementById('gpr-dot').className='dot';
     document.getElementById('gpr-status-text').textContent='SSE baglantisi kuruluyor...';
-
     gprEventSource=new EventSource('/api/gpr-stream?lat='+lat+'&lng='+lng);
     gprEventSource.onopen=function(){
         document.getElementById('gpr-dot').className='dot connected';
@@ -711,8 +762,7 @@ function startGPR(lat,lng){
             drawGPR();
         }else if(msg.type==='complete'){
             document.getElementById('gpr-status-text').textContent='Tarama tamamlandi';
-            gprEventSource.close();
-            gprEventSource=null;
+            gprEventSource.close();gprEventSource=null;
             showGPRKatmanlar(lat,lng);
         }
     };
@@ -728,59 +778,31 @@ function drawGPR(){
     canvas.width=w;canvas.height=h;
     var ctx=canvas.getContext('2d');
     ctx.fillStyle='#0a0c14';ctx.fillRect(0,0,w,h);
-
-    ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=0.5;
+    ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=0.5;
     for(var y=0;y<h;y+=h/10){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
     for(var x=0;x<w;x+=w/20){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
-
     if(gprData.length<2)return;
     var maxT=Math.max(gprData.length,100);
-    var scaleY=h*0.4;
-    var midY=h*0.5;
-
+    var midY=h*0.5,scaleY=h*0.4;
     for(var i=0;i<gprData.length-1;i++){
-        var x1=(i/maxT)*w;
-        var x2=((i+1)/maxT)*w;
-        var a1=gprData[i].a;
-        var a2=gprData[i+1].a;
-        var y1p=midY-a1*scaleY;
-        var y2p=midY-a2*scaleY;
-        var y1n=midY+Math.abs(a1)*scaleY*0.3;
-        var y2n=midY+Math.abs(a2)*scaleY*0.3;
-
-        if(a1>0){
-            ctx.fillStyle='rgba(0,200,255,0.4)';
-            ctx.beginPath();ctx.moveTo(x1,midY);ctx.lineTo(x1,y1p);ctx.lineTo(x2,y2p);ctx.lineTo(x2,midY);ctx.fill();
-        }else{
-            ctx.fillStyle='rgba(255,80,80,0.3)';
-            ctx.beginPath();ctx.moveTo(x1,midY);ctx.lineTo(x1,y1p);ctx.lineTo(x2,y2p);ctx.lineTo(x2,midY);ctx.fill();
-        }
+        var x1=(i/maxT)*w,x2=((i+1)/maxT)*w;
+        var a1=gprData[i].a,a2=gprData[i+1].a;
+        var y1p=midY-a1*scaleY,y2p=midY-a2*scaleY;
+        if(a1>0){ctx.fillStyle='rgba(0,200,255,0.35)';ctx.beginPath();ctx.moveTo(x1,midY);ctx.lineTo(x1,y1p);ctx.lineTo(x2,y2p);ctx.lineTo(x2,midY);ctx.fill();}
+        else{ctx.fillStyle='rgba(255,80,80,0.25)';ctx.beginPath();ctx.moveTo(x1,midY);ctx.lineTo(x1,y1p);ctx.lineTo(x2,y2p);ctx.lineTo(x2,midY);ctx.fill();}
     }
-
-    ctx.strokeStyle='#00ccff';ctx.lineWidth=1.2;ctx.beginPath();
-    for(var i=0;i<gprData.length;i++){
-        var x=(i/maxT)*w;
-        var y=midY-gprData[i].a*scaleY;
-        if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
-    }
+    ctx.strokeStyle='#00ccff';ctx.lineWidth=1;ctx.beginPath();
+    for(var i=0;i<gprData.length;i++){var x=(i/maxT)*w,y=midY-gprData[i].a*scaleY;if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
     ctx.stroke();
-
-    ctx.fillStyle='rgba(0,212,255,0.7)';ctx.font='10px Inter';
-    ctx.fillText('GPR Radargram - '+gprData.length+' ornek',8,14);
-    ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='9px Inter';
-    ctx.fillText('200ns pencere | 100MHz | Zemin Taramasi',8,h-6);
-
-    ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='9px Inter';
-    for(var d=0;d<=50;d+=10){
-        var yd=midY-(d/50)*scaleY;
-        ctx.fillText(d+'m',w-30,yd+3);
-    }
+    ctx.fillStyle='rgba(0,212,255,0.7)';ctx.font='9px Inter';
+    ctx.fillText('GPR Radargram - '+gprData.length+' ornek',6,12);
+    ctx.fillStyle='rgba(255,255,255,0.25)';ctx.font='8px Inter';
+    ctx.fillText('200ns | 100MHz | Zemin Taramasi',6,h-5);
 }
 
 function showGPRKatmanlar(lat,lng){
     fetch('/api/gpr-scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lat:lat,lng:lng})})
-    .then(function(r){return r.json()})
-    .then(function(data){
+    .then(function(r){return r.json()}).then(function(data){
         var html='';
         data.katmanlar.forEach(function(k){
             html+='<div class="gpr-katman"><span class="kat-name">'+k.ad+'</span><span class="kat-depth">'+k.derinlik+'m</span></div>';
@@ -801,45 +823,32 @@ function init3D(gprData){
     var canvas=document.getElementById('threed-canvas');
     var w=canvas.offsetWidth,h=canvas.offsetHeight;
     canvas.width=w;canvas.height=h;
-
     if(threeRenderer){threeRenderer.dispose();}
-
     threeScene=new THREE.Scene();
     threeScene.background=new THREE.Color(0x0a0c14);
     threeCamera=new THREE.PerspectiveCamera(60,w/h,0.1,1000);
     threeCamera.position.set(0,8,12);
     threeCamera.lookAt(0,0,0);
-
     threeRenderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true});
     threeRenderer.setSize(w,h);
-
     var layers=gprData.katmanlar||[];
-    var colors=[0x2d5a27,0x8B4513,0xa0906a,0x696969,0xcc3300];
+    var colors=[0x2d5a27,0x8B4513,0xa0906a,0x707070,0x505050,0x404040];
     var yOffset=0;
     layers.forEach(function(k,i){
         var thickness=Math.max(0.5,(k.kalinlik||10)/15);
         var geo=new THREE.BoxGeometry(8,thickness,6);
-        var mat=new THREE.MeshPhongMaterial({color:colors[i]||0x888888,transparent:true,opacity:0.85});
+        var mat=new THREE.MeshPhongMaterial({color:colors[i%colors.length],transparent:true,opacity:0.85});
         var mesh=new THREE.Mesh(geo,mat);
         mesh.position.y=yOffset-thickness/2;
         threeScene.add(mesh);
         yOffset-=thickness+0.1;
     });
-
-    var geo=new THREE.BoxGeometry(8,0.2,6);
-    var mat=new THREE.MeshPhongMaterial({color:0x00d4ff,emissive:0x003366,transparent:true,opacity:0.3});
-    var water=new THREE.Mesh(geo,mat);
-    water.position.y=-4;
-    threeScene.add(water);
-
     threeScene.add(new THREE.AmbientLight(0x404040,0.6));
     var dirLight=new THREE.DirectionalLight(0xffffff,0.8);
     dirLight.position.set(5,10,5);
     threeScene.add(dirLight);
     threeScene.add(new THREE.PointLight(0xff6600,0.5,20).translateY(-6));
-
     threeScene.add(new THREE.GridHelper(10,10,0x2a2d3a,0x1a1d2e).translateY(yOffset-0.5));
-
     var angle=0;
     function animate(){
         requestAnimationFrame(animate);
@@ -860,21 +869,20 @@ function close3D(){
 function addReport(data,geoData,specData){
     var empty=document.getElementById('empty-state');if(empty)empty.remove();
     var container=document.getElementById('reports');
-    var temps=data.monthly_data.map(function(d){return d.sicaklik});
+    var temps=data.monthly_data.map(function(d){return d.sicaklik}).filter(function(t){return t!==0});
+    if(temps.length===0){showToast('Veri alinamadi');return;}
     var avg=(temps.reduce(function(a,b){return a+b},0)/temps.length).toFixed(1);
     var max=Math.max.apply(null,temps).toFixed(1),min=Math.min.apply(null,temps).toFixed(1);
     var gtc=function(t){if(t>=30)return'hot';if(t>=20)return'warm';if(t>=10)return'mild';if(t>=0)return'cool';return'cold';};
     var gbw=function(t){return Math.min(100,Math.max(5,((t+10)/50)*100));};
-    var mHTML=data.monthly_data.map(function(d){
+    var mHTML=data.monthly_data.filter(function(d){return d.sicaklik!==0}).map(function(d){
         return'<li><span class="month">'+d.ay+'</span><span style="display:flex;align-items:center;"><span class="temp" style="color:'+(d.sicaklik>=25?'#ff6b6b':d.sicaklik>=10?'#ffd93d':'#00d4ff')+'">'+d.sicaklik+' C</span><span class="temp-bar"><span class="temp-bar-fill '+gtc(d.sicaklik)+'" style="width:'+gbw(d.sicaklik)+'%"></span></span></span></li>';
     }).join('');
-
-    var kaynakBadge='<div class="data-source '+(data.kaynak==='open-meteo'?'real':'mock')+'">'+(data.kaynak==='open-meteo'?'Gercek Veri: Open-Meteo':'Tahmini Veri')+'</div>';
-
+    var kaynakBadge='<div class="data-source '+(data.kaynak==='open-meteo'?'real':'mock')+'">'+(data.kaynak==='open-meteo'?'Gercek Veri: Open-Meteo':'Veri Hatası')+'</div>';
     var geoHTML='';
     if(geoData){
-        var geoKaynak='<div class="data-source '+(geoData.kaynak&&geoData.kaynak.indexOf('open')>=0?'real':'mock')+'">'+(geoData.kaynak&&geoData.kaynak.indexOf('open')>=0?'Gercek Veri: Open-Elevation + AFAD':'Tahmini Veri')+'</div>';
-        geoHTML='<div style="margin-top:10px;padding-top:10px;border-top:1px solid #2a2d3a"><div style="font-size:11px;font-weight:600;color:#22c55e;margin-bottom:4px">&#127759; CBS Jeolojik Veri '+geoKaynak+'</div><div class="spectral-info">';
+        var geoKaynak='<div class="data-source '+(geoData.kaynak&&geoData.kaynak.indexOf('open')>=0?'real':'mock')+'">'+(geoData.kaynak&&geoData.kaynak.indexOf('open')>=0?'Gercek Veri: Open-Elevation + AFAD':'Veri Hatasi')+'</div>';
+        geoHTML='<div style="margin-top:8px;padding-top:8px;border-top:1px solid #2a2d3a"><div style="font-size:10px;font-weight:600;color:#22c55e;margin-bottom:3px">&#127759; CBS Jeolojik Veri '+geoKaynak+'</div><div class="spectral-info">';
         geoHTML+='<div class="spectral-row"><span class="spectral-label">Zemin Sinifi</span><span class="spectral-value" style="color:'+geoData.sinif_bilgisi.renk+'">'+geoData.ana_sinif+' - '+geoData.sinif_bilgisi.aciklama+'</span></div>';
         geoHTML+='<div class="spectral-row"><span class="spectral-label">Vs30</span><span class="spectral-value">'+geoData.vs30+' m/s</span></div>';
         geoHTML+='<div class="spectral-row"><span class="spectral-label">Heyelan Riski</span><span class="spectral-value" style="color:'+(geoData.heyelan_riski>0.5?'#ff6b6b':geoData.heyelan_riski>0.25?'#ffd93d':'#22c55e')+'">'+Math.round(geoData.heyelan_riski*100)+'%</span></div>';
@@ -888,17 +896,15 @@ function addReport(data,geoData,specData){
         }
         geoHTML+='</div></div>';
     }
-
     var specHTML='';
     if(specData){
-        var specKaynak='<div class="data-source '+(specData.kaynak==='sentinel2-proxy'?'real':'mock')+'">'+(specData.kaynak==='sentinel2-proxy'?'Gercek Veri: Sentinel-2 Proxy':'Tahmini Veri')+'</div>';
-        specHTML='<div style="margin-top:10px;padding-top:10px;border-top:1px solid #2a2d3a"><div style="font-size:11px;font-weight:600;color:#ffd93d;margin-bottom:4px">&#128752; Uydu Spektral Analiz '+specKaynak+'</div><div class="spectral-info">';
+        var specKaynak='<div class="data-source '+(specData.kaynak&&specData.kaynak.indexOf('open')>=0?'real':'mock')+'">'+(specData.kaynak&&specData.kaynak.indexOf('open')>=0?'Gercek Veri: Open-Elevation + Meteo':'Veri Hatasi')+'</div>';
+        specHTML='<div style="margin-top:8px;padding-top:8px;border-top:1px solid #2a2d3a"><div style="font-size:10px;font-weight:600;color:#ffd93d;margin-bottom:3px">&#128752; Uydu Spektral Analiz '+specKaynak+'</div><div class="spectral-info">';
         specHTML+='<div class="spectral-row"><span class="spectral-label">Bitki Durumu (NDVI)</span><span class="spectral-value" style="color:'+(specData.yorum.bitki_durumu==='Iyi'?'#22c55e':specData.yorum.bitki_durumu==='Orta'?'#ffd93d':'#ff6b6b')+'">'+specData.yorum.bitki_durumu+'</span></div>';
         specHTML+='<div class="spectral-row"><span class="spectral-label">Nem Durumu (NDWI)</span><span class="spectral-value" style="color:'+(specData.yorum.nem_durumu==='Yuksek'?'#00d4ff':specData.yorum.nem_durumu==='Orta'?'#ffd93d':'#ff6b6b')+'">'+specData.yorum.nem_durumu+'</span></div>';
         specHTML+='<div class="spectral-row"><span class="spectral-label">Mineral Bilesim</span><span class="spectral-value" style="color:'+(specData.yorum.mineral_bilesim==='Zengin'?'#22c55e':specData.yorum.mineral_bilesim==='Orta'?'#ffd93d':'#ff6b6b')+'">'+specData.yorum.mineral_bilesim+'</span></div>';
         specHTML+='</div></div>';
     }
-
     var card=document.createElement('div');card.className='report-card';
     card.innerHTML='<h4>'+data.region+'</h4><div class="coords">'+data.bounds.north.toFixed(4)+'N, '+data.bounds.east.toFixed(4)+'E'+(data.koordinat?' | '+data.koordinat.lat+', '+data.koordinat.lng:'')+'</div>'+kaynakBadge+'<div class="summary"><div class="summary-item"><div class="label">Ortalama</div><div class="value">'+avg+'</div></div><div class="summary-item"><div class="label">En Sicak</div><div class="value hot">'+max+'</div></div><div class="summary-item"><div class="label">En soguk</div><div class="value cold">'+min+'</div></div><div class="summary-item"><div class="label">Fark</div><div class="value">'+(max-min).toFixed(1)+'</div></div></div><ul class="monthly-list">'+mHTML+'</ul>'+geoHTML+specHTML;
     container.insertBefore(card,container.firstChild);
