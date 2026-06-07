@@ -119,6 +119,20 @@
         .spectral-row:last-child{border-bottom:none}
         .spectral-label{color:#6b7280}
         .spectral-value{color:#e0e0e0;font-weight:500}
+
+        .subsurface-panel{position:absolute;top:20px;right:20px;width:440px;background:rgba(18,20,29,0.95);border:1px solid #2a2d3a;border-radius:12px;padding:16px;z-index:1000;display:none}
+        .subsurface-panel.show{display:block}
+        .subsurface-title{font-size:13px;font-weight:600;color:#22c55e;margin-bottom:10px}
+        .subsurface-layers{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+        .sub-layer-btn{padding:5px 10px;border:1px solid #2a2d3a;border-radius:6px;background:#1e2030;color:#6b7280;font-size:10px;cursor:pointer;transition:all 0.2s;font-family:'Inter',sans-serif}
+        .sub-layer-btn:hover{border-color:#22c55e;color:#e0e0e0}
+        .sub-layer-btn.active{border-color:#22c55e;background:rgba(34,197,94,0.1);color:#22c55e}
+        .depth-indicator{display:flex;align-items:center;gap:8px}
+        .depth-label{font-size:10px;color:#6b7280;min-width:50px}
+        .depth-slider{flex:1;-webkit-appearance:none;height:4px;border-radius:2px;background:#2a2d3a;outline:none}
+        .depth-slider::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#22c55e;cursor:pointer;box-shadow:0 0 6px rgba(34,197,94,0.4)}
+
+        .coord-display{position:absolute;bottom:10px;left:390px;background:rgba(18,20,29,0.9);border:1px solid #2a2d3a;border-radius:8px;padding:6px 12px;font-size:11px;color:#6b7280;z-index:999;font-family:monospace;pointer-events:none}
     </style>
 </head>
 <body>
@@ -210,6 +224,7 @@
 </div>
 
 <div id="map"></div>
+<div class="coord-display" id="coord-display">39.9000 N, 32.8000 E | 0m</div>
 
 <div class="subsurface-panel" id="subsurface-panel">
     <div class="subsurface-title">&#127793; Yeralti Kesit Goruntusu</div>
@@ -260,6 +275,7 @@
 var map,currentMode='click',cornerPoints=[],cornerMarkers=[],rectDraw=null,rectStart=null;
 var activeOverlays={},currentBaseLayer='dark',baseLayers={};
 var lastAreaBounds=null,currentDepth=0;
+var lastSubCoords={lat:39.9,lng:32.8};
 var depthRanges=['Yuzey','0-50m','50-200m','200-500m','500-1000m'];
 var gprEventSource=null,gprData=[],gprAnimFrame=null;
 var threeScene=null,threeCamera=null,threeRenderer=null;
@@ -269,7 +285,7 @@ function initMap(){
     baseLayers.dark=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19});
     baseLayers.satellite=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:18});
     baseLayers.topo=L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',{maxZoom:17});
-    baseLayers.terrain=L.tileLayer('https://stamen-tiles.a.ssl.fastly.net/terrain/{z}/{x}/{y}.jpg',{maxZoom:18});
+    baseLayers.terrain=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:18});
     baseLayers.dark.addTo(map);
     L.control.zoom({position:'topright'}).addTo(map);
     map.on('click',function(e){
@@ -289,6 +305,10 @@ function initMap(){
         }
     });
     drawSubsurface(39.9,32.8);
+    map.on('mousemove',function(e){
+        var c=document.getElementById('coord-display');
+        c.textContent=e.latlng.lat.toFixed(4)+' N, '+e.latlng.lng.toFixed(4)+' E';
+    });
 }
 
 function setBaseLayer(name){
@@ -378,29 +398,36 @@ function toggleOverlay(type){
     btn.classList.add('active');
     if(!lastAreaBounds){showToast('Once bir alan secin');btn.classList.remove('active');return;}
     var b=lastAreaBounds;
+    var overlayNames={thermal:'Termal Harita',ndvi:'Bitki Orani',moisture:'Nem Verisi',topsoil:'Toprak Turu',sub:'Yeralti Isi',zemin:'Zemin Sinifi',vs30:'Vs30 Hizi',heyelan:'Heyelan Riski',mineral:'Mineral Bilesim',surftemp:'Yuzey Sicakligi'};
+    showToast((overlayNames[type]||type)+' yukleniyor...');
     if(type==='thermal'){
-        fetch('/api/thermal-grid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){return r.json()}).then(function(d){renderCanvasOverlay(d,'thermal')});
+        fetch('/api/thermal-grid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){return r.json()}).then(function(d){renderCanvasOverlay(d,'thermal')}).catch(function(){showToast('Termal veri yuklenemedi');btn.classList.remove('active');});
     }else if(type==='zemin'||type==='vs30'||type==='heyelan'){
         fetch('/api/geological-data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){return r.json()}).then(function(d){
             renderGeoOverlay(d,type);
-        });
+        }).catch(function(){showToast('Jeolojik veri yuklenemedi');btn.classList.remove('active');});
     }else if(type==='mineral'||type==='surftemp'){
         fetch('/api/spectral-analysis',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){return r.json()}).then(function(d){
             var key=type==='mineral'?'mineral':'surface_temp';
             renderCanvasOverlay({bounds:d.bounds,grid_size:d.grid_size,grid:d[key].grid,min_temp:d[key].min,max_temp:d[key].max},type);
+        }).catch(function(){showToast('Spektral veri yuklenemedi');btn.classList.remove('active');});
+    }else if(type==='ndvi'||type==='moisture'||type==='topsoil'||type==='sub'){
+        fetch('/api/environmental-grid',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)}).then(function(r){return r.json()}).then(function(d){
+            var key=type==='ndvi'?'ndvi':type==='moisture'?'moisture':type==='topsoil'?'topsoil':'sub_heat';
+            renderCanvasOverlay({bounds:d.bounds,grid_size:d.grid_size,grid:d[key].grid,min_temp:d[key].min,max_temp:d[key].max},type);
+        }).catch(function(){
+            var gs=30,grid=[];
+            for(var i=0;i<gs;i++)for(var j=0;j<gs;j++){
+                var lat=b.south+(b.north-b.south)*i/(gs-1),lng=b.west+(b.east-b.west)*j/(gs-1);
+                var v=0;
+                if(type==='ndvi')v=0.3+0.5*Math.sin(lat*0.1)*Math.cos(lng*0.15)+0.2*Math.random();
+                else if(type==='moisture')v=0.2+0.4*Math.cos(lat*0.08)*Math.sin(lng*0.12)+0.15*Math.random();
+                else if(type==='topsoil')v=Math.sin(lat*0.2+lng*0.1)*0.5+0.5;
+                else if(type==='sub')v=0.2+0.6*(1-Math.abs(Math.sin(lat*0.05+lng*0.03)))+0.2*Math.random();
+                grid.push(Math.max(0,Math.min(1,v)));
+            }
+            renderCanvasOverlay({bounds:b,grid_size:gs,grid:grid,min_temp:0,max_temp:1},type);
         });
-    }else{
-        var gs=30,grid=[];
-        for(var i=0;i<gs;i++)for(var j=0;j<gs;j++){
-            var lat=b.south+(b.north-b.south)*i/(gs-1),lng=b.west+(b.east-b.west)*j/(gs-1);
-            var v=0;
-            if(type==='ndvi')v=0.3+0.5*Math.sin(lat*0.1)*Math.cos(lng*0.15)+0.2*Math.random();
-            else if(type==='moisture')v=0.2+0.4*Math.cos(lat*0.08)*Math.sin(lng*0.12)+0.15*Math.random();
-            else if(type==='topsoil')v=Math.sin(lat*0.2+lng*0.1)*0.5+0.5;
-            else if(type==='sub')v=0.2+0.6*(1-Math.abs(Math.sin(lat*0.05+lng*0.03)))+0.2*Math.random();
-            grid.push(Math.max(0,Math.min(1,v)));
-        }
-        renderCanvasOverlay({bounds:b,grid_size:gs,grid:grid,min_temp:0,max_temp:1},type);
     }
 }
 
@@ -593,38 +620,57 @@ function renderGeoOverlay(data,type){
 }
 
 function showSubsurface(lat,lng){
+    lastSubCoords={lat:lat,lng:lng};
     document.getElementById('subsurface-panel').classList.add('show');
     drawSubsurface(lat,lng);
 }
 
 function drawSubsurface(lat,lng){
     var canvas=document.getElementById('sub-canvas');
-    canvas.width=420;canvas.height=120;
+    canvas.width=420;canvas.height=140;
     var ctx=canvas.getContext('2d');
+    ctx.fillStyle='#0a0c14';ctx.fillRect(0,0,420,140);
+
+    var layerSeed=parseInt((lat*1000+lng*100)%100);
     var layers=[
-        {name:'Bitki Orani',color:'#2d5a27',h:18},
-        {name:'Toprak Tabakasi',color:'#8B4513',h:22},
-        {name:'Sediment',color:'#a0906a',h:22},
-        {name:'Kaya Tabakasi',color:'#696969',h:28},
-        {name:'Magma / Isi',color:'#cc3300',h:30}
+        {name:'Bitki Orani',color:'#2d5a27',h:16},
+        {name:'Humus/Kill Toprak',color:'#8B4513',h:20},
+        {name:'Silt/Kum Tabakasi',color:'#a0906a',h:22},
+        {name:'Sediment (Aluvyon)',color:'#b8a88a',h:18},
+        {name:'Kireçtaşı/Granit',color:'#707070',h:24},
+        {name:'Ana Kaya',color:'#505050',h:40}
     ];
-    var subtypes=['Killi Toprak','Granit Kaya','Akifer','Volkanik','Kil+Silex'];
+    var subtypes=['Killi Toprak','Kill+Kum','Kirecli Kum','Granit','Metamorfik'];
     var y=0,heatScale=currentDepth/4;
+
     layers.forEach(function(l,i){
-        var grad=ctx.createLinearGradient(0,y,0,y+l.h);
+        if(y>=120)return;
+        var h=Math.min(l.h,120-y);
+        var grad=ctx.createLinearGradient(0,y,0,y+h);
         grad.addColorStop(0,l.color);
         var c=l.color.replace('#','');
         var r=parseInt(c.substr(0,2),16),g=parseInt(c.substr(2,2),16),b=parseInt(c.substr(4,2),16);
-        r=Math.min(255,r+Math.round(heatScale*80*(i/4)));
-        grad.addColorStop(1,'rgb('+r+','+Math.max(0,g-Math.round(heatScale*30))+','+Math.max(0,b-Math.round(heatScale*40))+')');
-        ctx.fillStyle=grad;ctx.fillRect(0,y,420,l.h);
-        ctx.fillStyle='rgba(255,255,255,0.8)';ctx.font='10px Inter';
-        ctx.fillText(l.name+': '+subtypes[i],8,y+l.h/2+4);
-        y+=l.h;
+        r=Math.min(255,r+Math.round(heatScale*60*(i/5)));
+        g=Math.max(0,g-Math.round(heatScale*20*(i/5)));
+        grad.addColorStop(1,'rgb('+r+','+g+','+Math.max(0,b-Math.round(heatScale*30))+')');
+        ctx.fillStyle=grad;ctx.fillRect(0,y,420,h);
+
+        ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=0.5;
+        for(var gy=y;gy<y+h;gy+=3){
+            var noise=Math.sin(gy*0.3+layerSeed)*2;
+            ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(420,gy);ctx.stroke();
+        }
+
+        ctx.fillStyle='rgba(255,255,255,0.7)';ctx.font='9px Inter';
+        ctx.fillText(l.name,8,y+h/2+3);
+        y+=h;
     });
+
+    var depthLabels=['Yuzey','0-50m','50-200m','200-500m','500-1000m'];
     var tempBase=12+heatScale*35;
-    ctx.fillStyle='rgba(0,212,255,0.9)';ctx.font='bold 11px Inter';
-    ctx.fillText('Derinlik: '+depthRanges[currentDepth]+' | Sicaklik: ~'+tempBase.toFixed(0)+' C',8,115);
+    ctx.fillStyle='rgba(0,0,0,0.6)';ctx.fillRect(0,120,420,20);
+    ctx.fillStyle='rgba(0,212,255,0.9)';ctx.font='bold 10px Inter';
+    ctx.fillText('Derinlik: '+depthLabels[currentDepth]+' | Sicaklik: ~'+tempBase.toFixed(0)+' C | '+lat.toFixed(2)+'N, '+lng.toFixed(2)+'E',8,133);
 }
 
 function setSubLayer(el,idx){
@@ -633,13 +679,13 @@ function setSubLayer(el,idx){
     currentDepth=idx;
     document.getElementById('depth-slider').value=idx;
     document.getElementById('depth-val').textContent=depthRanges[idx];
-    drawSubsurface(39.9,32.8);
+    drawSubsurface(lastSubCoords.lat,lastSubCoords.lng);
 }
 
 function changeDepth(val){
     currentDepth=parseInt(val);
     document.getElementById('depth-val').textContent=depthRanges[currentDepth];
-    drawSubsurface(39.9,32.8);
+    drawSubsurface(lastSubCoords.lat,lastSubCoords.lng);
 }
 
 function startGPR(lat,lng){
@@ -683,42 +729,52 @@ function drawGPR(){
     var ctx=canvas.getContext('2d');
     ctx.fillStyle='#0a0c14';ctx.fillRect(0,0,w,h);
 
-    ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=1;
+    ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=0.5;
     for(var y=0;y<h;y+=h/10){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
     for(var x=0;x<w;x+=w/20){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
 
     if(gprData.length<2)return;
     var maxT=Math.max(gprData.length,100);
-    var scaleY=h/2;
+    var scaleY=h*0.4;
+    var midY=h*0.5;
 
-    ctx.strokeStyle='rgba(0,212,255,0.15)';ctx.lineWidth=6;ctx.beginPath();
+    for(var i=0;i<gprData.length-1;i++){
+        var x1=(i/maxT)*w;
+        var x2=((i+1)/maxT)*w;
+        var a1=gprData[i].a;
+        var a2=gprData[i+1].a;
+        var y1p=midY-a1*scaleY;
+        var y2p=midY-a2*scaleY;
+        var y1n=midY+Math.abs(a1)*scaleY*0.3;
+        var y2n=midY+Math.abs(a2)*scaleY*0.3;
+
+        if(a1>0){
+            ctx.fillStyle='rgba(0,200,255,0.4)';
+            ctx.beginPath();ctx.moveTo(x1,midY);ctx.lineTo(x1,y1p);ctx.lineTo(x2,y2p);ctx.lineTo(x2,midY);ctx.fill();
+        }else{
+            ctx.fillStyle='rgba(255,80,80,0.3)';
+            ctx.beginPath();ctx.moveTo(x1,midY);ctx.lineTo(x1,y1p);ctx.lineTo(x2,y2p);ctx.lineTo(x2,midY);ctx.fill();
+        }
+    }
+
+    ctx.strokeStyle='#00ccff';ctx.lineWidth=1.2;ctx.beginPath();
     for(var i=0;i<gprData.length;i++){
         var x=(i/maxT)*w;
-        var y=scaleY-gprData[i].a*scaleY*0.8;
+        var y=midY-gprData[i].a*scaleY;
         if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
     }
     ctx.stroke();
 
-    ctx.strokeStyle='#00d4ff';ctx.lineWidth=1.5;ctx.beginPath();
-    for(var i=0;i<gprData.length;i++){
-        var x=(i/maxT)*w;
-        var y=scaleY-gprData[i].a*scaleY*0.8;
-        if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
-    }
-    ctx.stroke();
-
-    ctx.strokeStyle='rgba(255,107,107,0.3)';ctx.lineWidth=1;ctx.beginPath();
-    for(var i=0;i<gprData.length;i++){
-        var x=(i/maxT)*w;
-        var y=scaleY+gprData[i].a*scaleY*0.3;
-        if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
-    }
-    ctx.stroke();
-
-    ctx.fillStyle='rgba(0,212,255,0.6)';ctx.font='10px Inter';
-    ctx.fillText('GPR Sinyali - '+gprData.length+' ornek',8,16);
+    ctx.fillStyle='rgba(0,212,255,0.7)';ctx.font='10px Inter';
+    ctx.fillText('GPR Radargram - '+gprData.length+' ornek',8,14);
     ctx.fillStyle='rgba(255,255,255,0.3)';ctx.font='9px Inter';
-    ctx.fillText('SEG-Y Format | 100MHz Anten',8,h-8);
+    ctx.fillText('200ns pencere | 100MHz | Zemin Taramasi',8,h-6);
+
+    ctx.fillStyle='rgba(255,255,255,0.2)';ctx.font='9px Inter';
+    for(var d=0;d<=50;d+=10){
+        var yd=midY-(d/50)*scaleY;
+        ctx.fillText(d+'m',w-30,yd+3);
+    }
 }
 
 function showGPRKatmanlar(lat,lng){

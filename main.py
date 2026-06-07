@@ -405,28 +405,44 @@ def generate_gpr_profile(lat: float, lng: float) -> dict:
     seed_val = int((lat + lng) * 10000) % (2**31)
     random.seed(seed_val)
 
-    time_window = 100
+    time_window = 200
     signal = []
     depth = []
+
+    num_layers = random.randint(4, 7)
+    layer_depths = sorted([random.uniform(2, 45) for _ in range(num_layers)])
+    layer_amps = [random.uniform(0.15, 0.6) * math.exp(-d / 80) for d in layer_depths]
+    layer_widths = [random.uniform(1.5, 4.0) for _ in range(num_layers)]
+
     for t in range(time_window):
-        d = t * 0.5
-        depth.append(round(d, 1))
-        amp = 0
-        for layer in range(5):
-            layer_depth = random.uniform(10, 80) * (layer + 1)
-            layer_amp = random.uniform(0.3, 0.9) * math.exp(-d / 200) * math.sin(2 * math.pi * d / (layer_depth + 10))
-            amp += layer_amp
-        amp += random.gauss(0, 0.05)
+        d = t * 0.25
+        depth.append(round(d, 2))
+        amp = random.gauss(0, 0.02)
+
+        for i in range(num_layers):
+            ld = layer_depths[i]
+            la = layer_amps[i]
+            lw = layer_widths[i]
+            amp += la * math.exp(-((d - ld) ** 2) / (2 * lw * lw))
+
+        amp += random.gauss(0, 0.015)
         amp = max(-1, min(1, amp))
         signal.append(round(amp, 4))
 
-    katmanlar = [
-        {"ad": "Toprak Yuzey", "derinlik": round(random.uniform(0, 10), 1), "kalinlik": round(random.uniform(5, 20), 1)},
-        {"ad": "Killi Tabaka", "derinlik": round(random.uniform(15, 30), 1), "kalinlik": round(random.uniform(10, 30), 1)},
-        {"ad": "Kumlu Tabaka", "derinlik": round(random.uniform(40, 60), 1), "kalinlik": round(random.uniform(15, 40), 1)},
-        {"ad": "Kaya Ana Kaya", "derinlik": round(random.uniform(80, 150), 1), "kalinlik": 0},
-        {"ad": "Yeralti Suyu", "derinlik": round(random.uniform(30, 100), 1), "kalinlik": round(random.uniform(5, 25), 1)},
-    ]
+    katman_names = ["Toprak Yuzey", "Killi Tabaka", "Kumlu Tabaka", "Siltstone", "Kirec Taski", "Ana Kaya", "Yeralti Suyu"]
+    katmanlar = []
+    for i in range(num_layers):
+        katmanlar.append({
+            "ad": katman_names[i % len(katman_names)],
+            "derinlik": round(layer_depths[i], 1),
+            "kalinlik": round(layer_widths[i] * random.uniform(3, 8), 1),
+        })
+
+    katmanlar.append({
+        "ad": "Ana Kaya",
+        "derinlik": round(layer_depths[-1] + random.uniform(10, 30), 1),
+        "kalinlik": 0
+    })
 
     return {
         "lat": lat, "lng": lng,
@@ -514,6 +530,84 @@ async def spectral_analysis(bounds: BoundingBox):
     return await generate_real_spectral_data(bounds)
 
 
+@app.post("/api/environmental-grid")
+async def environmental_grid(bounds: BoundingBox):
+    grid_size = 30
+    elevations = await fetch_elevation_grid(bounds, grid_size)
+
+    if not elevations or len(elevations) < grid_size * grid_size:
+        elevations = []
+        for i in range(grid_size):
+            for j in range(grid_size):
+                lat = bounds.south + (bounds.north - bounds.south) * i / (grid_size - 1)
+                lng = bounds.west + (bounds.east - bounds.west) * j / (grid_size - 1)
+                elevations.append(300 + math.sin(lat * 0.1) * 200 + math.cos(lng * 0.08) * 150)
+
+    lat = (bounds.north + bounds.south) / 2
+    lng = (bounds.east + bounds.west) / 2
+    meteo = await fetch_open_meteo(lat, lng)
+    annual_precip = 600
+    if meteo and "daily" in meteo:
+        precip_data = meteo["daily"].get("precipitation_sum", [])
+        if precip_data:
+            annual_precip = sum(p for p in precip_data if p is not None)
+
+    ndvi_grid = []
+    moisture_grid = []
+    topsoil_grid = []
+    sub_heat_grid = []
+
+    avg_elev = sum(elevations) / len(elevations)
+
+    for i in range(grid_size):
+        for j in range(grid_size):
+            idx = i * grid_size + j
+            e = elevations[idx]
+            lat_p = bounds.south + (bounds.north - bounds.south) * i / (grid_size - 1)
+            lng_p = bounds.west + (bounds.east - bounds.west) * j / (grid_size - 1)
+
+            elev_norm = max(0, min(1, e / 2500))
+            lat_effect = math.sin(lat_p * 0.06) * 0.15
+            lon_effect = math.cos(lng_p * 0.04) * 0.1
+            precip_norm = min(1.0, annual_precip / 1200)
+
+            ndvi = 0.45 + precip_norm * 0.3 + lat_effect - elev_norm * 0.25 + lon_effect + random.gauss(0, 0.05)
+            ndvi = max(0, min(1, ndvi))
+
+            moisture = 0.3 + precip_norm * 0.4 - elev_norm * 0.2 + lat_effect * 0.5 + random.gauss(0, 0.04)
+            if e < 100:
+                moisture += 0.15
+            moisture = max(0, min(1, moisture))
+
+            if e < 200:
+                topsoil = 0.7 + random.gauss(0, 0.08)
+            elif e < 500:
+                topsoil = 0.5 + random.gauss(0, 0.1)
+            elif e < 1000:
+                topsoil = 0.3 + random.gauss(0, 0.08)
+            else:
+                topsoil = 0.15 + random.gauss(0, 0.06)
+            topsoil = max(0, min(1, topsoil))
+
+            heat = 0.3 + (1 - elev_norm) * 0.35 + precip_norm * 0.1 + random.gauss(0, 0.05)
+            heat = max(0, min(1, heat))
+
+            ndvi_grid.append(round(ndvi, 3))
+            moisture_grid.append(round(moisture, 3))
+            topsoil_grid.append(round(topsoil, 3))
+            sub_heat_grid.append(round(heat, 3))
+
+    return {
+        "bounds": {"north": bounds.north, "south": bounds.south, "east": bounds.east, "west": bounds.west},
+        "grid_size": grid_size,
+        "ndvi": {"grid": ndvi_grid, "min": round(min(ndvi_grid), 3), "max": round(max(ndvi_grid), 3)},
+        "moisture": {"grid": moisture_grid, "min": round(min(moisture_grid), 3), "max": round(max(moisture_grid), 3)},
+        "topsoil": {"grid": topsoil_grid, "min": round(min(topsoil_grid), 3), "max": round(max(topsoil_grid), 3)},
+        "sub_heat": {"grid": sub_heat_grid, "min": round(min(sub_heat_grid), 3), "max": round(max(sub_heat_grid), 3)},
+        "kaynak": "open-elevation+meteo" if elevations else "mock"
+    }
+
+
 @app.post("/api/gpr-scan")
 async def gpr_scan(point: PointRequest):
     return generate_gpr_profile(point.lat, point.lng)
@@ -560,23 +654,31 @@ async def gpr_stream_sse(lat: float = 39.9, lng: float = 32.8):
         seed_val = int((lat + lng) * 10000) % (2**31)
         random.seed(seed_val)
 
-        depth_points = 100
-        for t in range(depth_points):
-            amp = 0
-            for layer in range(5):
-                layer_depth = random.uniform(10, 80) * (layer + 1)
-                amp += random.uniform(0.3, 0.9) * math.exp(-t * 0.5 / 200) * math.sin(2 * math.pi * t * 0.5 / (layer_depth + 10))
-            amp += random.gauss(0, 0.05)
+        num_layers = random.randint(4, 7)
+        layer_depths = sorted([random.uniform(2, 45) for _ in range(num_layers)])
+        layer_amps = [random.uniform(0.15, 0.6) * math.exp(-d / 80) for d in layer_depths]
+        layer_widths = [random.uniform(1.5, 4.0) for _ in range(num_layers)]
+
+        time_window = 200
+        for t in range(time_window):
+            d = t * 0.25
+            amp = random.gauss(0, 0.02)
+            for i in range(num_layers):
+                ld = layer_depths[i]
+                la = layer_amps[i]
+                lw = layer_widths[i]
+                amp += la * math.exp(-((d - ld) ** 2) / (2 * lw * lw))
+            amp += random.gauss(0, 0.015)
             amp = max(-1, min(1, amp))
             msg = json.dumps({
                 "type": "signal",
                 "time": t,
-                "depth": round(t * 0.5, 1),
+                "depth": round(d, 2),
                 "amplitude": round(amp, 4),
-                "progress": round((t + 1) / depth_points * 100, 1)
+                "progress": round((t + 1) / time_window * 100, 1)
             })
             yield f"data: {msg}\n\n"
-            await asyncio.sleep(0.03)
+            await asyncio.sleep(0.02)
 
         yield f"data: {json.dumps({'type': 'complete', 'message': 'Tarama tamamlandi'})}\n\n"
 
